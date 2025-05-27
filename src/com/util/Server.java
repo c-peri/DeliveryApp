@@ -47,6 +47,7 @@ public class Server implements Runnable {
 
                 Socket clientSocket = serverSocket.accept();
                 System.out.println("Accepted connection from " + clientSocket.getRemoteSocketAddress());
+                //does it pull now
 
                 if (hashMap.containsKey("invalidKey") && hashMap.containsValue(new Store("invalid", 0, 0, "invalid", 0, 0, "invalid", null))){
                     new Thread(new ClientHandler(clientSocket)).start();
