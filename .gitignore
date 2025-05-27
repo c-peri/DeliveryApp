@@ -27,3 +27,14 @@ bin/
 
 ### Mac OS ###
 .DS_Store
+
+# Good
+.gradle/
+build/
+.idea/
+*.iml
+
+# DO NOT IGNORE
+!src/
+!build.gradle
+!settings.gradle
