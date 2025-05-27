@@ -27,3 +27,11 @@ bin/
 
 ### Mac OS ###
 .DS_Store
+
+*.iml
+.gradle/
+build/
+.idea/
+local.properties
+.DS_Store
+*.keystore
