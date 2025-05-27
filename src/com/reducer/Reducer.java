@@ -1,10 +1,9 @@
+package com.reducer;
+
 /*
  * @author Alexandra-Maria Mazi || p3220111@aueb.gr
- * @author Christina Perifana || p3220160@aueb.gr
- *
+ * @author Christina Perifana   || p3220160@aueb.gr
  */
-
-package com.reducer;
 
 import com.util.Client;
 import com.util.Config;

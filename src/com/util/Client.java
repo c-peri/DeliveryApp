@@ -1,10 +1,9 @@
+package com.util;
+
 /*
  * @author Alexandra-Maria Mazi || p3220111@aueb.gr
- * @author Christina Perifana || p3220160@aueb.gr
- *
+ * @author Christina Perifana   || p3220160@aueb.gr
  */
-
-package com.util;
 
 import com.google.gson.Gson;
 import com.google.gson.JsonSyntaxException;

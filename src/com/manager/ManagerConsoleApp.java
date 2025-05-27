@@ -1,9 +1,9 @@
+package com.manager;
+
 /*
  * @author Alexandra-Maria Mazi || p3220111@aueb.gr
- * @author Christina Perifana || p3220160@aueb.gr
- *
+ * @author Christina Perifana   || p3220160@aueb.gr
  */
-package com.manager;
 
 import com.util.*;
 

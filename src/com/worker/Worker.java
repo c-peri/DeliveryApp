@@ -1,10 +1,9 @@
+package com.worker;
+
 /*
  * @author Alexandra-Maria Mazi || p3220111@aueb.gr
- * @author Christina Perifana || p3220160@aueb.gr
- *
+ * @author Christina Perifana   || p3220160@aueb.gr
  */
-
-package com.worker;
 
 import com.util.*;
 
