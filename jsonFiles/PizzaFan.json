@@ -1,0 +1,32 @@
+{
+  "StoreName": "PizzaFan",
+  "Latitude": 27.9932963,
+  "Longitude": 33.733413,
+  "FoodCategory": "pizzeria",
+  "Stars": 4,
+  "NoOfVotes": 1,
+  "StoreLogo": "jsonFiles/example_logo.png",
+  "Products": [
+    {
+      "ProductName": "margarita",
+      "ProductType": "pizza",
+      "AvailableAmount": 0,
+      "Price": 9.2,
+      "availability": false
+    },
+    {
+      "ProductName": "special",
+      "ProductType": "pizza",
+      "AvailableAmount": 0,
+      "Price": 12.0,
+      "availability": false
+    },
+    {
+      "ProductName": "chef’s Salad",
+      "ProductType": "salad",
+      "AvailableAmount": 0,
+      "Price": 5.0,
+      "availability": false
+    }
+  ]
+}
