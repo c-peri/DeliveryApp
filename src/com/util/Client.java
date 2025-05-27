@@ -617,8 +617,7 @@ public class Client implements Runnable {
                                 Object receivedResponse = inObj.readObject();
                                 System.out.println("[DEBUG] Received object from server: " + receivedResponse);
 
-                                if (receivedResponse instanceof ActionWrapper) {
-                                    ActionWrapper response = (ActionWrapper) receivedResponse;
+                                if (receivedResponse instanceof ActionWrapper response) {
                                     String resAction = response.getAction();
                                     Object resObject = response.getObject();
 
@@ -653,9 +652,7 @@ public class Client implements Runnable {
 
                         }
 
-                    } catch (RuntimeException e) {
-                        throw new RuntimeException(e);
-                    } catch (ClassNotFoundException e) {
+                    } catch (RuntimeException | ClassNotFoundException e) {
                         throw new RuntimeException(e);
                     }
 

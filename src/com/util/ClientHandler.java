@@ -40,10 +40,14 @@ public class ClientHandler implements Runnable {
             resultsLock.notifyAll();
         }
     }
+
     public static void addMappedResults(List<AbstractMap.SimpleEntry<String, Store>> resultList, String jobID) {
+
         synchronized (reducerLock) {
+
             System.out.println("JobID: " + jobID);
             System.out.println("ResultList: " + resultList);
+
             int currentExpectedWorkers = Config.getNumberOfWorkers();
 
             if (!resultList.isEmpty()) {
@@ -52,6 +56,7 @@ public class ClientHandler implements Runnable {
                 workersResponded++;
 
             } else {
+
                 workersResponded++;
                 System.out.println("Searching stores...");
 
@@ -60,6 +65,7 @@ public class ClientHandler implements Runnable {
             if (workersResponded >= currentExpectedWorkers) {
 
                 System.out.println("Search complete.");
+
                 List<AbstractMap.SimpleEntry<String, Store>> resultsToProcess = new ArrayList<>(allMappedResults);
                 allMappedResults.clear();
                 workersResponded = 0;
@@ -121,6 +127,7 @@ public class ClientHandler implements Runnable {
                 switch (port){
 
                     case 5000:
+
                         System.out.println(socket.getPort());
 
                         if (action.equalsIgnoreCase("json")){
@@ -241,12 +248,6 @@ public class ClientHandler implements Runnable {
                                         new Thread(new ActionsForMaster("localhost", 5001 + i, clonedWrapper, i)).start();
                                     }
 
-                                } else if (action.equalsIgnoreCase("mapped_store_results")) {
-
-                                    List<Store> finalResults = (List<Store>) wrapper.getObject();
-                                    addFinalResults(finalResults, wrapper.getJobID());
-                                    System.out.println(resultsMap);
-
                                 }
 
                                 List<Store> clientResults = null;
@@ -254,70 +255,71 @@ public class ClientHandler implements Runnable {
                                 String error = null;
 
                                 synchronized (resultsLock) {
+
                                     while (!resultsMap.containsKey(jobID)) {
+
                                         try {
+
                                             System.out.println("Waiting for results...");
+
                                             resultsLock.wait(500);
+
                                         } catch (InterruptedException e) {
+
                                             Thread.currentThread().interrupt();
                                             System.err.println("Interrupted while waiting for results...");
                                             error = "Request interrupted";
+
                                             break;
+
                                         }
+
                                     }
 
                                     if (error == null) {
-                                        Object resObject = resultsMap.remove(jobID);
-                                        if (resObject instanceof List<?>) {
-                                            clientResults = (List<Store>) resObject;
+
+                                        List<Store> resObject = resultsMap.remove(jobID);
+
+                                        if (resObject != null) {
+                                            clientResults = resObject;
                                             System.out.println(clientResults);
-                                        } else if (resObject instanceof String) {
-                                            message = (String) resObject;
-                                            System.out.println(message);
                                         } else {
                                             error = "Unexpected result type";
                                         }
+
                                     }
+
                                 }
 
-// Decide action type for response
                                 String responseAction;
                                 Object responseData;
 
                                 if (error != null) {
+
                                     responseAction = "error";
                                     responseData = error;
-                                } else if (clientResults != null) {
-                                    responseAction = action; // same action back to client
-                                    responseData = clientResults;
-                                } else if (message != null) {
-                                    switch (action.toLowerCase()) {
-                                        case "purchase_product":
-                                            responseAction = "purchase_confirmation";
-                                            break;
-                                        case "rate_store":
-                                            responseAction = "rate_confirmation";
-                                            break;
-                                        default:
-                                            responseAction = "generic_confirmation";
-                                    }
-                                    responseData = message;
+
                                 } else {
-                                    responseAction = "error";
-                                    responseData = "No data received.";
+
+                                    responseAction = action;
+                                    responseData = clientResults;
+
                                 }
 
-// Send response
                                 ActionWrapper responseToClient = new ActionWrapper(responseData, responseAction, jobID);
                                 out.writeObject(responseToClient);
                                 out.flush();
+
                                 return;
 
                             } else if (action.equalsIgnoreCase("mapped_store_results")) {
+
                                 List<Store> finalResults = (List<Store>) wrapper.getObject();
                                 String receivedJobID = wrapper.getJobID();
+
                                 System.out.println(receivedJobID);
                                 System.out.println(finalResults);
+
                                 addFinalResults(finalResults, receivedJobID);
 
                                 return;
@@ -329,6 +331,7 @@ public class ClientHandler implements Runnable {
                         break;
 
                     case 5001:
+
                         System.out.println(socket.getPort());
 
                         if (action.equalsIgnoreCase("mapped_store_results") || action.equalsIgnoreCase("confirmation_from_worker")) {
@@ -355,6 +358,7 @@ public class ClientHandler implements Runnable {
                         break;
 
                     default:
+
                         System.out.println(socket.getPort());
 
                         if (action.equalsIgnoreCase("json")){
@@ -429,7 +433,6 @@ public class ClientHandler implements Runnable {
                             int workerId = Integer.parseInt(parts[3]);
 
                             new Thread(new ActionsForWorkers("localhost", 5001,wrapper,hashMap,workerId)).start();
-
 
                         } else if (action.equalsIgnoreCase("search_ratings")){
 

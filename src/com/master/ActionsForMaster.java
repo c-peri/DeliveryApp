@@ -27,10 +27,6 @@ public class ActionsForMaster implements Runnable {
         this.workerID = workerID;
     }
 
-    public ActionsForMaster(ActionWrapper received) {
-        this.received = received;
-    }
-
     public void run() {
 
         ObjectOutputStream objOut;

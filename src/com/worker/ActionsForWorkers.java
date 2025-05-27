@@ -316,7 +316,6 @@ public class ActionsForWorkers implements Runnable {
             String st = parts[2];
             int rating = Integer.parseInt(st);
 
-
             StoreMapper mapper = new StoreMapper(latitude, longitude, FilterMode.LOCATION_AND_STARS);
             mapper.setMinStars(rating);
             List<AbstractMap.SimpleEntry<String, Store> > mapped = mapper.map(localStores);
@@ -363,6 +362,7 @@ public class ActionsForWorkers implements Runnable {
             }
 
         } else if (action.equalsIgnoreCase("purchase_product")) {
+
             String confirmationMsg = "";
             opt = (String) obj;
             String[] parts = opt.split("_", 5);
@@ -408,38 +408,40 @@ public class ActionsForWorkers implements Runnable {
                             confirmationMsg = product.getProductName() + " has been purchased.";
 
                             break;
+
                         }
 
                     }
 
                     if (!found) {
-
                         confirmationMsg = "Product: " + productName + " does not exist";
-
                     }
 
                 } else {
-
                     confirmationMsg = "Store out of range.";
-
                 }
 
             } else {
                 confirmationMsg = "Store does not exist.";
             }
+
             try {
+
                 Socket socketToReducer = new Socket(host, port);
                 ObjectOutputStream objOutToReducer = new ObjectOutputStream(socketToReducer.getOutputStream());
+
                 ActionWrapper wToReducer = new ActionWrapper(confirmationMsg, "confirmation_from_worker", wrapper.getJobID());
+
                 objOutToReducer.writeObject(wToReducer);
                 objOutToReducer.flush();
                 socketToReducer.close();
+
             } catch (IOException e) {
                 throw new RuntimeException(e);
             }
-            return;
 
         } else if (action.equalsIgnoreCase("rate_store")) {
+
             String confirmationMsg;
             opt = (String) obj;
             String[] parts = opt.split("_", 5);
@@ -466,27 +468,28 @@ public class ActionsForWorkers implements Runnable {
                     confirmationMsg = "You gave " + stars + " stars to " + storeName + "!";
 
                 } else {
-
                     confirmationMsg = "Store out of range.";
-
                 }
 
             } else {
-
                 confirmationMsg = "Store does not exist";
-
             }
+
             try {
+
                 Socket socketToReducer = new Socket(host, port);
                 ObjectOutputStream objOutToReducer = new ObjectOutputStream(socketToReducer.getOutputStream());
+
                 ActionWrapper wToReducer = new ActionWrapper(confirmationMsg, "confirmation_from_worker", wrapper.getJobID());
+
                 objOutToReducer.writeObject(wToReducer);
                 objOutToReducer.flush();
                 socketToReducer.close();
+
             } catch (IOException e) {
                 throw new RuntimeException(e);
             }
-            return;
+
         }
 
     }

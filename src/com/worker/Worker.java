@@ -28,6 +28,7 @@ public class Worker {
         HashMap<String, Store> StoreMap = new HashMap<>();
 
         new Thread(() -> {
+
             try {
 
                 int port = 5002 + workerId - 1;
@@ -40,6 +41,7 @@ public class Worker {
             } catch (Exception e) {
                 e.printStackTrace();
             }
+
         }).start();
 
         synchronized (Config.configLock) {

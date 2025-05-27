@@ -11,7 +11,7 @@ import java.util.Scanner;
 
 public class ManagerConsoleApp {
 
-    public static void main(String[] args) throws InterruptedException {
+    public static void main(String[] args) {
 
         Scanner in = new Scanner(System.in);
         String choice;
@@ -117,8 +117,6 @@ public class ManagerConsoleApp {
 
                         System.out.println("---------------------------------------------------------------------------------");
 
-                        System.out.println("Returning to launcher...");
-
                         return;
                     default:
                         System.out.println("Error: Please choose one of the options listed");
@@ -143,8 +141,6 @@ public class ManagerConsoleApp {
             } while (!choice.equalsIgnoreCase("no") && !choice.equalsIgnoreCase("yes"));
 
         }
-
-        System.out.println("Returning to launcher...");
 
     }
 
