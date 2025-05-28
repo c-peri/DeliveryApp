@@ -311,7 +311,7 @@ public class ClientHandler implements Runnable {
 
                                 return;
 
-                            } else if (action.equalsIgnoreCase("mapped_store_results") || action.equalsIgnoreCase("mapped_store_results1") || action.equalsIgnoreCase("mapped_store_results2")) {
+                            } else if (action.startsWith("mapped_store_results")) {
 
                                 if (action.equalsIgnoreCase("mapped_store_results")){
 
@@ -345,16 +345,21 @@ public class ClientHandler implements Runnable {
 
                                 } else {
 
+                                    String[] parts1 = action.split("_", 4);
+
                                     List<Store> finalResults = (List<Store>) wrapper.getObject();
                                     String receivedJobID = wrapper.getJobID();
                                     int total = 0;
 
                                     System.out.println(receivedJobID);
-
+                                    
                                     for (Store s : finalResults){
                                         for (Product p : s.getProducts()){
-                                            System.out.println(s.getStoreName()+" : "+ p.getProductSales());
-                                            total += p.getProductSales();
+                                            if (p.getProductType().equalsIgnoreCase(parts1[3])){
+                                                System.out.println(s.getStoreName()+" : "+ p.getProductSales());
+                                                total += p.getProductSales();
+                                            }
+
                                         }
                                     }
 
@@ -381,8 +386,7 @@ public class ClientHandler implements Runnable {
 
                         System.out.println(socket.getPort());
 
-                        if (action.equalsIgnoreCase("mapped_store_results") || action.equalsIgnoreCase("confirmation_from_worker") ||
-                            action.equalsIgnoreCase("mapped_store_results1") || action.equalsIgnoreCase("mapped_store_results2")) {
+                        if (action.startsWith("mapped_store_results") || action.equalsIgnoreCase("confirmation_from_worker") ) {
 
                             List<AbstractMap.SimpleEntry<String, Store>> resultList = null;
                             String confirmFromWorker = null;

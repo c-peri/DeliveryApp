@@ -525,7 +525,7 @@ public class ActionsForWorkers implements Runnable {
 
                 Socket socket = new Socket(host, port);
                 ObjectOutputStream objOut = new ObjectOutputStream(socket.getOutputStream());
-                ActionWrapper w = new ActionWrapper(mapped, "mapped_store_results2", ((ActionWrapper) received).getJobID());
+                ActionWrapper w = new ActionWrapper(mapped, "mapped_store_results_"+parts[0], ((ActionWrapper) received).getJobID());
                 objOut.writeObject(w);
                 objOut.flush();
 
