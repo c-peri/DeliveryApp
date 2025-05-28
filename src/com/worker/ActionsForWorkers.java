@@ -59,9 +59,7 @@ public class ActionsForWorkers implements Runnable {
                 }
 
             } catch (Exception e) {
-
                 System.err.println("Store already added");
-
             }
 
         } else if (action.equalsIgnoreCase("add_available_product")){

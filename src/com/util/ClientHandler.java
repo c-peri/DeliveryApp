@@ -90,6 +90,7 @@ public class ClientHandler implements Runnable {
                 } else if (grouped.containsKey("within_range")) {
                     reducedList.addAll(reducer.reduce("within_range", grouped.get("within_range")));
                 }
+
                 new Thread(new ActionsForReducer("localhost", 5000, action, reducedList, jobID)).start();
 
             }
@@ -204,12 +205,9 @@ public class ClientHandler implements Runnable {
 
                                 new Thread(new ActionsForMaster("localhost", workerPort, wrapper, workerId)).start();
 
-                            } else if (action.equalsIgnoreCase("showcase_stores") ||
-                                    action.equalsIgnoreCase("search_food_preference") ||
-                                    action.equalsIgnoreCase("search_ratings") ||
-                                    action.equalsIgnoreCase("search_price_range") ||
-                                    action.equalsIgnoreCase("purchase_product") ||
-                                    action.equalsIgnoreCase("rate_store")) {
+                            } else if (action.equalsIgnoreCase("showcase_stores") || action.equalsIgnoreCase("search_food_preference") ||
+                                       action.equalsIgnoreCase("search_ratings") || action.equalsIgnoreCase("search_price_range") ||
+                                       action.equalsIgnoreCase("purchase_product") || action.equalsIgnoreCase("rate_store")) {
 
                                 if (action.equalsIgnoreCase("purchase_product")) {
 
@@ -239,8 +237,8 @@ public class ClientHandler implements Runnable {
 
                                     new Thread(new ActionsForMaster("localhost", workerPort, wrapper, workerId)).start();
 
-                                } else if (action.equalsIgnoreCase("showcase_stores") || action.equalsIgnoreCase("search_food_preference") || action.equalsIgnoreCase("search_ratings") ||
-                                        action.equalsIgnoreCase("search_price_range")) {
+                                } else if (action.equalsIgnoreCase("showcase_stores") || action.equalsIgnoreCase("search_food_preference") ||
+                                           action.equalsIgnoreCase("search_ratings") || action.equalsIgnoreCase("search_price_range")) {
 
                                     for (int i = 1; i <= numOfWorkers; i++) {
                                         ActionWrapper clonedWrapper = new ActionWrapper(obj, action, jobID);
@@ -352,7 +350,7 @@ public class ClientHandler implements Runnable {
                                     int total = 0;
 
                                     System.out.println(receivedJobID);
-                                    
+
                                     for (Store s : finalResults){
                                         for (Product p : s.getProducts()){
                                             if (p.getProductType().equalsIgnoreCase(parts1[3])){
@@ -424,7 +422,6 @@ public class ClientHandler implements Runnable {
                                 new Thread(new ActionsForWorkers("localhost", 5001,wrapper,hashMap,workerId)).start();
 
                             } else {
-
                                 System.out.println("[Handler] Message received: " + input);
                             }
 

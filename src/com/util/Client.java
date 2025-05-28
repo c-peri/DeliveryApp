@@ -650,12 +650,9 @@ public class Client implements Runnable {
 
                             }
 
-                            if (this.action.equalsIgnoreCase("showcase_stores") ||
-                                    this.action.equalsIgnoreCase("search_food_preference") ||
-                                    this.action.equalsIgnoreCase("search_ratings") ||
-                                    this.action.equalsIgnoreCase("search_price_range") ||
-                                    this.action.equalsIgnoreCase("purchase_product") ||
-                                    this.action.equalsIgnoreCase("rate_store")) {
+                            if (this.action.equalsIgnoreCase("showcase_stores") || this.action.equalsIgnoreCase("search_food_preference") ||
+                                this.action.equalsIgnoreCase("search_ratings") || this.action.equalsIgnoreCase("search_price_range") ||
+                                this.action.equalsIgnoreCase("purchase_product") || this.action.equalsIgnoreCase("rate_store")) {
 
                                 System.out.println("[DEBUG] Waiting to create ObjectInputStream...");
                                 inObj = new ObjectInputStream(socket.getInputStream());
@@ -664,6 +661,7 @@ public class Client implements Runnable {
                                 System.out.println("[DEBUG] Received object from server: " + receivedResponse);
 
                                 if (receivedResponse instanceof ActionWrapper response) {
+
                                     String resAction = response.getAction();
                                     Object resObject = response.getObject();
 
@@ -671,15 +669,21 @@ public class Client implements Runnable {
                                     System.out.println("[DEBUG] Response object: " + resObject);
 
                                     if (resAction.equalsIgnoreCase("final_results") && resObject instanceof List<?>) {
+
                                         List<Store> finalResults = (List<Store>) resObject;
+
                                         if (finalResults.isEmpty()) {
                                             System.out.println("No stores found matching your criteria.");
                                         } else {
+
                                             System.out.println("Found " + finalResults.size() + " stores");
+
                                             for (Store store : finalResults) {
                                                 System.out.println(">> " + store.getStoreName());
                                             }
+
                                         }
+
                                     } else if (resAction.equalsIgnoreCase("purchase_confirmation")) {
                                         System.out.println("Purchase status: " + resObject);
                                     } else if (resAction.equalsIgnoreCase("rate_confirmation")) {
@@ -689,12 +693,12 @@ public class Client implements Runnable {
                                     } else {
                                         System.out.println("Received unknown response type: " + resObject);
                                     }
+
                                 } else {
                                     System.out.println("Received unexpected response object: " + receivedResponse);
                                 }
 
                             }
-
 
                         }
 
@@ -713,8 +717,7 @@ public class Client implements Runnable {
                 synchronized (lock) {
                     try {
                         lock.wait(500);
-                    } catch (InterruptedException ignored) {
-                    }
+                    } catch (InterruptedException ignored) { }
                 }
 
             }

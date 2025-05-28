@@ -17,12 +17,10 @@ public class StoreReducer {
             return Collections.emptyList();
         }
 
-        switch (key) {
-            case "within_range", "filtered_store":
-                return new ArrayList<>(stores);
-            default:
-                return Collections.emptyList();
-        }
+        return switch (key) {
+            case "within_range", "filtered_store" -> new ArrayList<>(stores);
+            default -> Collections.emptyList();
+        };
 
     }
 
