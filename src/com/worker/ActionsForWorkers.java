@@ -258,7 +258,7 @@ public class ActionsForWorkers implements Runnable {
             String lat = parts[1];
             double latitude =Double.parseDouble(lat);
 
-            StoreMapper mapper = new StoreMapper(latitude, longitude, FilterMode.LOCATION);
+            StoreMapper mapper = new StoreMapper(latitude, longitude, FilterMode.LOCATION, null);
             List< AbstractMap.SimpleEntry<String, Store> > mapped = mapper.map(localStores);
 
             try {
@@ -286,7 +286,7 @@ public class ActionsForWorkers implements Runnable {
 
             String food_type = parts[2];
 
-            StoreMapper mapper = new StoreMapper(latitude, longitude, FilterMode.LOCATION_AND_CATEGORY);
+            StoreMapper mapper = new StoreMapper(latitude, longitude, FilterMode.LOCATION_AND_CATEGORY, null);
             mapper.setFoodCategory(food_type);
             List< AbstractMap.SimpleEntry<String, Store> > mapped = mapper.map(localStores);
 
@@ -316,7 +316,7 @@ public class ActionsForWorkers implements Runnable {
             String st = parts[2];
             int rating = Integer.parseInt(st);
 
-            StoreMapper mapper = new StoreMapper(latitude, longitude, FilterMode.LOCATION_AND_STARS);
+            StoreMapper mapper = new StoreMapper(latitude, longitude, FilterMode.LOCATION_AND_STARS, null);
             mapper.setMinStars(rating);
             List<AbstractMap.SimpleEntry<String, Store> > mapped = mapper.map(localStores);
 
@@ -345,7 +345,7 @@ public class ActionsForWorkers implements Runnable {
 
             String range = parts[2];
 
-            StoreMapper mapper = new StoreMapper(latitude, longitude, FilterMode.LOCATION_AND_PRICE_RANGE);
+            StoreMapper mapper = new StoreMapper(latitude, longitude, FilterMode.LOCATION_AND_PRICE_RANGE, null);
             mapper.setPriceRange(range);
             List< AbstractMap.SimpleEntry<String, Store> > mapped = mapper.map(localStores);
 
@@ -404,6 +404,7 @@ public class ActionsForWorkers implements Runnable {
                                 break;
                             }
 
+                            product.setProductSales(1);
                             store.setProducts(products);
                             confirmationMsg = product.getProductName() + " has been purchased.";
 
@@ -485,6 +486,48 @@ public class ActionsForWorkers implements Runnable {
                 objOutToReducer.writeObject(wToReducer);
                 objOutToReducer.flush();
                 socketToReducer.close();
+
+            } catch (IOException e) {
+                throw new RuntimeException(e);
+            }
+
+        } else if (action.equalsIgnoreCase("total_sales_store")) {
+
+            opt = (String) obj;
+            String[] parts = opt.split("_", 2);
+
+            StoreMapper mapper = new StoreMapper(0.0, 0.0, parts[0], FilterMode.SALES_STORE);
+            List< AbstractMap.SimpleEntry<String, Store> > mapped = mapper.map(localStores);
+
+            System.out.println(mapped);
+
+            try {
+
+                Socket socket = new Socket(host, port);
+                ObjectOutputStream objOut = new ObjectOutputStream(socket.getOutputStream());
+                ActionWrapper w = new ActionWrapper(mapped, "mapped_store_results1", ((ActionWrapper) received).getJobID());
+                objOut.writeObject(w);
+                objOut.flush();
+
+            } catch (IOException e) {
+                throw new RuntimeException(e);
+            }
+
+        } else if (action.equalsIgnoreCase("total_sales_product")){
+
+            opt = (String) obj;
+            String[] parts = opt.split("_", 2);
+
+            StoreMapper mapper = new StoreMapper(0.0, 0.0, parts[0], FilterMode.SALES_PRODUCT);
+            List< AbstractMap.SimpleEntry<String, Store> > mapped = mapper.map(localStores);
+
+            try {
+
+                Socket socket = new Socket(host, port);
+                ObjectOutputStream objOut = new ObjectOutputStream(socket.getOutputStream());
+                ActionWrapper w = new ActionWrapper(mapped, "mapped_store_results2", ((ActionWrapper) received).getJobID());
+                objOut.writeObject(w);
+                objOut.flush();
 
             } catch (IOException e) {
                 throw new RuntimeException(e);

@@ -17,11 +17,13 @@ public class ActionsForReducer implements Runnable {
     private final String masterHost;
     private final int masterPort;
     private final Object workerResults;
+    private String action;
     private String jobID;
 
-    public ActionsForReducer(String masterHost, int masterPort, Object workerResults, String jobID) {
+    public ActionsForReducer(String masterHost, int masterPort, String action, Object workerResults, String jobID) {
         this.masterHost = masterHost;
         this.masterPort = masterPort;
+        this.action = action;
         this.workerResults = workerResults;
         this.jobID = jobID;
     }
@@ -32,19 +34,19 @@ public class ActionsForReducer implements Runnable {
         try (Socket socket = new Socket(masterHost, masterPort);
              ObjectOutputStream out = new ObjectOutputStream(socket.getOutputStream())) {
 
-            String action;
-
             if (workerResults instanceof List<?>) {
-                action = "mapped_store_results";
+                ActionWrapper wrapper = new ActionWrapper(workerResults, this.action, jobID);
+                out.writeObject(wrapper);
+                out.flush();
             } else if (workerResults instanceof String) {
-                action = "confirmation_from_worker";
+                ActionWrapper wrapper = new ActionWrapper(workerResults, "confirmation_from_worker", jobID);
+                out.writeObject(wrapper);
+                out.flush();
             } else {
-                action = "unknown_result";
+                ActionWrapper wrapper = new ActionWrapper(workerResults, "unknown_result", jobID);
+                out.writeObject(wrapper);
+                out.flush();
             }
-
-            ActionWrapper wrapper = new ActionWrapper(workerResults, action, jobID);
-            out.writeObject(wrapper);
-            out.flush();
 
         } catch (Exception e) {
             e.printStackTrace();

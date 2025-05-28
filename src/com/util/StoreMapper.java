@@ -14,14 +14,23 @@ public class StoreMapper {
     private final double userLat;
     private final double userLon;
     private final FilterMode filterMode;
+    private final String category;
 
     private String foodCategory;
     private int minStars;
     private String priceRange;
 
-    public StoreMapper(double userLat, double userLon, FilterMode filterMode) {
+    public StoreMapper(double userLat, double userLon, FilterMode filterMode, String category) {
         this.userLat = userLat;
         this.userLon = userLon;
+        this.filterMode = filterMode;
+        this.category = category;
+    }
+
+    public StoreMapper(double userLat, double userLon, String category, FilterMode filterMode){
+        this.userLat = userLat;
+        this.userLon = userLon;
+        this.category = category;
         this.filterMode = filterMode;
     }
 
@@ -41,11 +50,27 @@ public class StoreMapper {
 
         List<AbstractMap.SimpleEntry<String, Store>> result = new ArrayList<>();
 
+        boolean pass = true;
+
         for (Store store : stores) {
 
             double distance = GeoUtils.haversine(userLat, userLon, store.getLatitude(), store.getLongitude());
 
-            if (distance > 5.0) continue;
+            pass = switch (filterMode) {
+                case SALES_STORE -> {
+                    if (store.getFoodCategory().equals(category)) {
+                        result.add(new AbstractMap.SimpleEntry<>("filtered_store", store));
+                    }
+                    yield false;
+                }
+                case SALES_PRODUCT -> {
+                    result.add(new AbstractMap.SimpleEntry<>("filtered_store", store));
+                    yield false;
+                }
+                default -> true;
+            };
+
+            if (distance > 5.0 && pass) continue;
 
             switch (filterMode) {
 
