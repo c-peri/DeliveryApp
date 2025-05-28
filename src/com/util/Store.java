@@ -7,6 +7,10 @@ package com.util;
 
 import com.google.gson.annotations.Expose;
 
+import javax.imageio.ImageIO;
+import java.awt.image.BufferedImage;
+import java.io.File;
+import java.io.IOException;
 import java.io.Serializable;
 import java.util.*;
 
@@ -28,6 +32,7 @@ public class Store implements Serializable {
     private String StoreLogo;
     @Expose
     private List<Product> Products;
+    private int storeSales = 0;
 
     public Store(String StoreName, double Latitude, double Longitude, String FoodCategory, double Stars, int NoOfVotes, String StoreLogo, List<Product> Products) {
         this.StoreName = StoreName;
@@ -96,14 +101,6 @@ public class Store implements Serializable {
         this.Products = Products;
     }
 
-    public String getStoreLogo() {
-        return StoreLogo;
-    }
-
-    public void setStoreLogo(String StoreLogo) {
-        this.StoreLogo = StoreLogo;
-    }
-
     public String getStorePriceRange(){
 
         if (this.Products.isEmpty()){
@@ -142,6 +139,36 @@ public class Store implements Serializable {
         this.NoOfVotes++;
 
     }
+
+    /*
+        To use this we do something like
+
+        Store store = ...; // Assume deserialized from JSON
+        BufferedImage logoImage = store.getStoreLogoImage();
+
+        if (logoImage != null) {
+            System.out.println("Image loaded: " + logoImage.getWidth() + "x" + logoImage.getHeight());
+        }
+    */
+    public BufferedImage getStoreLogoImage() {
+        try {
+            return ImageIO.read(new File(StoreLogo));
+        } catch (IOException e) {
+            System.err.println("Error loading store logo image: " + StoreLogo);
+            e.printStackTrace();
+            return null;
+        }
+    }
+
+    public void setStoreLogo(String storeLogo) { this.StoreLogo = storeLogo; }
+
+    public void setStoreSales(){
+        for (Product p : Products){
+            this.storeSales += p.getProductSales();
+        }
+    }
+
+    public int getStoreSales(){ return  this.storeSales; }
 
     @Override
     public String toString() {

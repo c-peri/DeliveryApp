@@ -32,7 +32,8 @@ public class ManagerConsoleApp {
                 System.out.println("3. Remove availability from a product");
                 System.out.println("4. Add new product");
                 System.out.println("5. Remove old product");
-                System.out.println("6. Exit");
+                System.out.println("6. Show total sales");
+                System.out.println("7. Exit");
                 System.out.print("> ");
                 choice = in.nextLine();
 
@@ -50,7 +51,7 @@ public class ManagerConsoleApp {
                             e.printStackTrace();
                         }
 
-                        pass=true;
+                        pass = true;
 
                         break;
                     case "2":
@@ -65,7 +66,7 @@ public class ManagerConsoleApp {
                             e.printStackTrace();
                         }
 
-                        pass=true;
+                        pass = true;
 
                         break;
                     case "3":
@@ -80,7 +81,7 @@ public class ManagerConsoleApp {
                             e.printStackTrace();
                         }
 
-                        pass=true;
+                        pass = true;
 
                         break;
                     case "4":
@@ -95,7 +96,7 @@ public class ManagerConsoleApp {
                             e.printStackTrace();
                         }
 
-                        pass=true;
+                        pass = true;
 
                         break;
                     case "5":
@@ -110,10 +111,53 @@ public class ManagerConsoleApp {
                             e.printStackTrace();
                         }
 
-                        pass=true;
+                        pass = true;
 
                         break;
                     case "6":
+
+                        System.out.println("---------------------------------------------------------------------------------");
+
+                        String ch;
+
+                        do {
+                            System.out.println("Please choose one of the following options:");
+                            System.out.println("1. Show total sales per store type");
+                            System.out.println("2. Show total sales per product category");
+                            System.out.print("> ");
+                            ch = in.nextLine();
+                        } while (!ch.equalsIgnoreCase("1") && !ch.equalsIgnoreCase("2"));
+
+                        if (ch.equalsIgnoreCase("1")) {
+
+                            System.out.println("---------------------------------------------------------------------------------");
+
+                            clientThread = new Thread(new Client("localhost", 5000, "null::total_sales_store", "Manager"));
+                            clientThread.start();
+                            try {
+                                clientThread.join();
+                            } catch (InterruptedException e) {
+                                e.printStackTrace();
+                            }
+
+                        } else if (ch.equalsIgnoreCase("2")) {
+
+                            System.out.println("---------------------------------------------------------------------------------");
+
+                            clientThread = new Thread(new Client("localhost", 5000, "null::total_sales_product", "Manager"));
+                            clientThread.start();
+                            try {
+                                clientThread.join();
+                            } catch (InterruptedException e) {
+                                e.printStackTrace();
+                            }
+
+                        }
+
+                        pass = true;
+
+                        break;
+                    case "7":
 
                         System.out.println("---------------------------------------------------------------------------------");
 

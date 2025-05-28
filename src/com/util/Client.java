@@ -234,6 +234,52 @@ public class Client implements Runnable {
                                     throw new RuntimeException(ex);
                                 }
 
+                            } else if (this.action.equalsIgnoreCase("total_sales_store")) {
+
+                                Scanner in = new Scanner(System.in);
+
+                                String category;
+
+                                System.out.println("Please insert the food category you want to search the total sales of");
+                                System.out.print("> ");
+                                category = in.nextLine();
+
+                                try {
+
+                                    Socket clientSocket = new Socket(host, port);
+                                    ObjectOutputStream outObj = new ObjectOutputStream(clientSocket.getOutputStream());
+                                    outObj.writeObject(new ActionWrapper(category, action,jobID));
+                                    outObj.flush();
+
+                                    break;
+
+                                } catch (IOException ex) {
+                                    throw new RuntimeException(ex);
+                                }
+
+                            } else if (this.action.equalsIgnoreCase("total_sales_product")) {
+
+                                Scanner in = new Scanner(System.in);
+
+                                String category;
+
+                                System.out.println("Please insert the product category you want to search the total sales of");
+                                System.out.print("> ");
+                                category = in.nextLine();
+
+                                try {
+
+                                    Socket clientSocket = new Socket(host, port);
+                                    ObjectOutputStream outObj = new ObjectOutputStream(clientSocket.getOutputStream());
+                                    outObj.writeObject(new ActionWrapper(category, action,jobID));
+                                    outObj.flush();
+
+                                    break;
+
+                                } catch (IOException ex) {
+                                    throw new RuntimeException(ex);
+                                }
+
                             }
 
                         }

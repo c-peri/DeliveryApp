@@ -324,6 +324,13 @@ public class ClientHandler implements Runnable {
 
                                 return;
 
+                            } else if (action.equalsIgnoreCase("total_sales_store") || action.equalsIgnoreCase("total_sales_product")){
+
+                                for (int i = 1; i <= numOfWorkers; i++) {
+                                    ActionWrapper clonedWrapper = new ActionWrapper(obj, action, jobID);
+                                    new Thread(new ActionsForMaster("localhost", 5001 + i, clonedWrapper, i)).start();
+                                }
+
                             }
 
                         }
