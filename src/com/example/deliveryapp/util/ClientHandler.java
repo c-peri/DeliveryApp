@@ -173,6 +173,7 @@ public class ClientHandler implements Runnable {
                                     ActionWrapper responseToClient = new ActionWrapper(wrapper.getObject(), "final_results", wrapper.getJobID());
                                     out.writeObject(responseToClient);
                                     out.flush();
+
                                 }
 
                                 return;
