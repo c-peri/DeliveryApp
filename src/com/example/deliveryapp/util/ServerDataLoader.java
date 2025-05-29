@@ -14,15 +14,6 @@ public class ServerDataLoader {
 
     private static final String SERVER_IMAGES_BASE_DIRECTORY = ".";
 
-    /**
-     * Iterates through a given list of Store objects and populates their StoreLogoBytes field
-     * by reading the image data from the path specified in StoreLogoPath.
-     * This method is intended to be called on the server just before sending the List<Store> to the client.
-     *
-     * @param stores The List of Store objects that needs to have their logo bytes populated.
-     * This list should already be filtered or prepared.
-     * @return The same List of Store objects, now with their StoreLogoBytes fields populated.
-     */
     public static List<Store> populateStoreLogosForClient(List<Store> stores) {
 
         if (stores == null || stores.isEmpty()) {

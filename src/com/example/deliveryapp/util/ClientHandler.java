@@ -349,7 +349,7 @@ public class ClientHandler implements Runnable {
 
                             System.out.println("Printing " + clientResults);
 
-                            ActionWrapper responseToClient = new ActionWrapper(clientResults, "final_results", jobID);
+                            ActionWrapper responseToClient = new ActionWrapper(ServerDataLoader.populateStoreLogosForClient(clientResults), "final_results", jobID);
                             out.writeObject(responseToClient);
                             out.flush();
 
