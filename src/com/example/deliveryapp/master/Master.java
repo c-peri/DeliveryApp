@@ -1,12 +1,12 @@
-package com.master;
+package com.example.deliveryapp.master;
 
 /*
  * @author Alexandra-Maria Mazi || p3220111@aueb.gr
  * @author Christina Perifana   || p3220160@aueb.gr
  */
 
-import com.util.Config;
-import com.util.Server;
+import com.example.deliveryapp.util.Config;
+import com.example.deliveryapp.util.Server;
 
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;

@@ -1,13 +1,17 @@
-package com.util;
+package com.example.deliveryapp.util;
 
 /*
  * @author Alexandra-Maria Mazi || p3220111@aueb.gr
  * @author Christina Perifana   || p3220160@aueb.gr
  */
 
+import java.io.Serial;
 import java.io.Serializable;
 
 public class ActionWrapper implements Serializable {
+
+    @Serial
+    private static final long serialVersionUID = 1L;
 
     private Object obj;
     private String action;

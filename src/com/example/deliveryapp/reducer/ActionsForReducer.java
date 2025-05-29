@@ -1,11 +1,11 @@
-package com.reducer;
+package com.example.deliveryapp.reducer;
 
 /*
  * @author Alexandra-Maria Mazi || p3220111@aueb.gr
  * @author Christina Perifana   || p3220160@aueb.gr
  */
 
-import com.util.ActionWrapper;
+import com.example.deliveryapp.util.ActionWrapper;
 
 import java.util.List;
 

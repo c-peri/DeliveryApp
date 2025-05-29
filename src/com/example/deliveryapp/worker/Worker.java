@@ -1,11 +1,14 @@
-package com.worker;
+package com.example.deliveryapp.worker;
 
 /*
  * @author Alexandra-Maria Mazi || p3220111@aueb.gr
  * @author Christina Perifana   || p3220160@aueb.gr
  */
 
-import com.util.*;
+import com.example.deliveryapp.util.Client;
+import com.example.deliveryapp.util.Config;
+import com.example.deliveryapp.util.Server;
+import com.example.deliveryapp.util.Store;
 
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;

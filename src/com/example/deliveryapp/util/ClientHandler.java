@@ -1,4 +1,4 @@
-package com.util;
+package com.example.deliveryapp.util;
 
 /*
  * @author Alexandra-Maria Mazi || p3220111@aueb.gr
@@ -6,9 +6,9 @@ package com.util;
  */
 
 import com.google.gson.*;
-import com.master.ActionsForMaster;
-import com.reducer.ActionsForReducer;
-import com.worker.ActionsForWorkers;
+import com.example.deliveryapp.master.ActionsForMaster;
+import com.example.deliveryapp.reducer.ActionsForReducer;
+import com.example.deliveryapp.worker.ActionsForWorkers;
 
 import java.io.*;
 import java.net.Socket;
@@ -277,7 +277,7 @@ public class ClientHandler implements Runnable {
 
                                 }
 
-                                ActionWrapper responseToClient = new ActionWrapper(clientResults, "final_results", jobID);
+                                ActionWrapper responseToClient = new ActionWrapper(ServerDataLoader.populateStoreLogosForClient(clientResults), "final_results", jobID);
                                 out.writeObject(responseToClient);
                                 out.flush();
                                 socket.close();

@@ -1,11 +1,11 @@
-package com.clientdummy;
+package com.example.deliveryapp.clientdummy;
 
 /*
  * @author Alexandra-Maria Mazi || p3220111@aueb.gr
  * @author Christina Perifana   || p3220160@aueb.gr
  */
 
-import com.util.*;
+import com.example.deliveryapp.util.Client;
 
 import java.util.Scanner;
 

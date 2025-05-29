@@ -1,13 +1,13 @@
-package com.reducer;
+package com.example.deliveryapp.reducer;
 
 /*
  * @author Alexandra-Maria Mazi || p3220111@aueb.gr
  * @author Christina Perifana   || p3220160@aueb.gr
  */
 
-import com.util.Client;
-import com.util.Config;
-import com.util.Server;
+import com.example.deliveryapp.util.Client;
+import com.example.deliveryapp.util.Config;
+import com.example.deliveryapp.util.Server;
 
 public class Reducer {
 

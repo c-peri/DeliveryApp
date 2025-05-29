@@ -1,4 +1,4 @@
-package com.util;
+package com.example.deliveryapp.util;
 
 /*
  * @author Alexandra-Maria Mazi || p3220111@aueb.gr
@@ -7,14 +7,13 @@ package com.util;
 
 import com.google.gson.annotations.Expose;
 
-import javax.imageio.ImageIO;
-import java.awt.image.BufferedImage;
-import java.io.File;
-import java.io.IOException;
-import java.io.Serializable;
+import java.io.*;
 import java.util.*;
 
 public class Store implements Serializable {
+
+    @Serial
+    private static final long serialVersionUID = 1L;
 
     @Expose
     private String StoreName;
@@ -33,6 +32,8 @@ public class Store implements Serializable {
     @Expose
     private List<Product> Products;
     private int storeSales = 0;
+
+    private byte[] StoreLogoBytes;
 
     public Store(String StoreName, double Latitude, double Longitude, String FoodCategory, double Stars, int NoOfVotes, String StoreLogo, List<Product> Products) {
         this.StoreName = StoreName;
@@ -140,27 +141,13 @@ public class Store implements Serializable {
 
     }
 
-    /*
-        To use this we do something like
+    public byte[] getStoreLogoBytes() { return StoreLogoBytes; }
 
-        Store store = ...; // Assume deserialized from JSON
-        BufferedImage logoImage = store.getStoreLogoImage();
-
-        if (logoImage != null) {
-            System.out.println("Image loaded: " + logoImage.getWidth() + "x" + logoImage.getHeight());
-        }
-    */
-    public BufferedImage getStoreLogoImage() {
-        try {
-            return ImageIO.read(new File(StoreLogo));
-        } catch (IOException e) {
-            System.err.println("Error loading store logo image: " + StoreLogo);
-            e.printStackTrace();
-            return null;
-        }
-    }
+    public void setStoreLogoBytes(byte[] StoreLogoBytes) { this.StoreLogoBytes = StoreLogoBytes; }
 
     public void setStoreLogo(String storeLogo) { this.StoreLogo = storeLogo; }
+
+    public String getStoreLogo() { return this.StoreLogo; }
 
     public void setStoreSales(){
         for (Product p : Products){

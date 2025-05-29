@@ -1,4 +1,4 @@
-package com.util;
+package com.example.deliveryapp.util;
 
 /*
  * @author Alexandra-Maria Mazi || p3220111@aueb.gr

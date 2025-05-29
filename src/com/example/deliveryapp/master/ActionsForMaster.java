@@ -1,12 +1,12 @@
-package com.master;
+package com.example.deliveryapp.master;
 
 /*
  * @author Alexandra-Maria Mazi || p3220111@aueb.gr
  * @author Christina Perifana   || p3220160@aueb.gr
  */
 
-import com.util.ActionWrapper;
-import com.util.Store;
+import com.example.deliveryapp.util.ActionWrapper;
+import com.example.deliveryapp.util.Store;
 
 import java.io.IOException;
 import java.io.ObjectOutputStream;
