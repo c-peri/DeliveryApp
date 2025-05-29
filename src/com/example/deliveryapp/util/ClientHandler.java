@@ -32,7 +32,6 @@ public class ClientHandler implements Runnable {
         List<Store> result = null;
     }
 
-
     public ClientHandler(Socket socket) {
         this.socket = socket;
     }
@@ -156,17 +155,25 @@ public class ClientHandler implements Runnable {
 
                             if (action.equalsIgnoreCase("mapped_store_results")) {
 
-                                List<Store> finalResults = (List<Store>) wrapper.getObject();
-                                String receivedJobID = wrapper.getJobID();
+                                if (wrapper.getObject() instanceof List<?>){
+                                    List<Store> finalResults = (List<Store>) wrapper.getObject();
+                                    String receivedJobID = wrapper.getJobID();
 
-                                System.out.println(receivedJobID);
-                                System.out.println(finalResults);
+                                    System.out.println(receivedJobID);
+                                    System.out.println(finalResults);
 
-                                addFinalResults(finalResults, receivedJobID);
+                                    addFinalResults(finalResults, receivedJobID);
 //                                System.out.println("Flushing to: " + socket.getRemoteSocketAddress());
 //                                ActionWrapper responseToClient = new ActionWrapper(finalResults, "final_results", receivedJobID);
 //                                out.writeObject(responseToClient);
 //                                out.flush();
+                                } else {
+
+                                    System.out.println(wrapper.getObject().toString());
+                                    ActionWrapper responseToClient = new ActionWrapper(wrapper.getObject(), "final_results", wrapper.getJobID());
+                                    out.writeObject(responseToClient);
+                                    out.flush();
+                                }
 
                                 return;
 
