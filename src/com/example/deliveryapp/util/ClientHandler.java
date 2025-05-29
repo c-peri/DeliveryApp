@@ -19,7 +19,7 @@ public class ClientHandler implements Runnable {
     private static volatile int workersResponded = 0;
     private static final Object reducerLock = new Object();
     private final Socket socket;
-    private HashMap<String,Store> hashMap;
+    private HashMap<String, Store> hashMap;
     private ObjectOutputStream out;
     private ObjectInputStream in;
 
@@ -27,9 +27,11 @@ public class ClientHandler implements Runnable {
     private static final Object resultsLock = new Object();
     private static final Map<String, Object> jobMonitors = Collections.synchronizedMap(new HashMap<>());
 
-    public ClientHandler(Socket socket) { this.socket = socket; }
+    public ClientHandler(Socket socket) {
+        this.socket = socket;
+    }
 
-    public ClientHandler(Socket socket, HashMap<String,Store> hashMap) {
+    public ClientHandler(Socket socket, HashMap<String, Store> hashMap) {
         this.socket = socket;
         this.hashMap = hashMap;
     }
@@ -284,6 +286,9 @@ public class ClientHandler implements Runnable {
                                 action.equalsIgnoreCase("search_ratings") || action.equalsIgnoreCase("search_price_range") ||
                                 action.equalsIgnoreCase("purchase_product") || action.equalsIgnoreCase("rate_store")) {
 
+                            jobMonitors.putIfAbsent(jobID, new Object());
+                            Object currentJobMonitor = jobMonitors.get(jobID);
+
                             if (action.equalsIgnoreCase("purchase_product")) {
 
                                 opt = (String) obj;
@@ -322,41 +327,34 @@ public class ClientHandler implements Runnable {
 
                             }
 
+
                             List<Store> clientResults = null;
 
-
-                            synchronized (resultsLock) {
-
+                            synchronized (currentJobMonitor) {
                                 while (!resultsMap.containsKey(jobID)) {
-
+                                    System.out.println("Waiting for results for JobID: " + jobID + "...");
                                     try {
-
-                                        System.out.println("Waiting for results...");
-
-                                        resultsLock.wait(500);
-
+                                        currentJobMonitor.wait();
                                     } catch (InterruptedException e) {
-
                                         Thread.currentThread().interrupt();
-                                        System.err.println("Interrupted while waiting for results...");
-
+                                        System.err.println("Interrupted while waiting for results for JobID: " + jobID);
+                                        clientResults = Collections.emptyList();
                                         break;
-
                                     }
 
                                 }
-
-                                List<Store> resObject = resultsMap.remove(jobID);
-                                clientResults = resObject;
-                                System.out.println("Printing " + clientResults);
-
+                                clientResults = resultsMap.remove(jobID);
+                                jobMonitors.remove(jobID);
                             }
 
-                            ActionWrapper responseToClient = new ActionWrapper(ServerDataLoader.populateStoreLogosForClient(clientResults), "final_results", jobID);
+                            System.out.println("Printing " + clientResults);
+
+                            ActionWrapper responseToClient = new ActionWrapper(clientResults, "final_results", jobID);
                             out.writeObject(responseToClient);
                             out.flush();
 
                             return;
+
 
                         } else if (action.equalsIgnoreCase("total_sales_store") || action.equalsIgnoreCase("total_sales_product")) {
 
@@ -368,7 +366,6 @@ public class ClientHandler implements Runnable {
                         }
 
                         break;
-
 
                     case 5001:
 

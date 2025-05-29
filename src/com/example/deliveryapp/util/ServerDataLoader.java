@@ -12,7 +12,7 @@ import javax.imageio.ImageIO;
 
 public class ServerDataLoader {
 
-    private static final String SERVER_IMAGES_BASE_DIRECTORY = "C:\\Users\\Alex\\Desktop\\DeliveryApp";
+    private static final String SERVER_IMAGES_BASE_DIRECTORY = ".";
 
     /**
      * Iterates through a given list of Store objects and populates their StoreLogoBytes field
