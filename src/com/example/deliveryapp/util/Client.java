@@ -21,6 +21,9 @@ public class Client implements Runnable {
     private int port;
     private String role;
     private String action;
+    private ObjectOutputStream out;
+    private ObjectInputStream in;
+
 
     private final Object lock = new Object();
 
@@ -31,6 +34,7 @@ public class Client implements Runnable {
         this.role = role;
         this.action = parts.length > 1 ? parts[1] : "";
     }
+
 
     public void run() {
 
@@ -85,12 +89,11 @@ public class Client implements Runnable {
 
                             }
 
-                            try {
+                            try (Socket clientSocket = new Socket(host, port);){
 
-                                Socket clientSocket = new Socket(host, port);
-                                ObjectOutputStream outObj = new ObjectOutputStream(clientSocket.getOutputStream());
-                                outObj.writeObject(new ActionWrapper(store, action, jobID));
-                                outObj.flush();
+                                out = new ObjectOutputStream(clientSocket.getOutputStream());
+                                out.writeObject(new ActionWrapper(store, action, jobID));
+                                out.flush();
 
                                 break;
 
@@ -119,12 +122,11 @@ public class Client implements Runnable {
                                 in.nextLine();
                             } while (quantity <= 0);
 
-                            try {
+                            try (Socket clientSocket = new Socket(host, port);){
 
-                                Socket clientSocket = new Socket(host, port);
-                                ObjectOutputStream outObj = new ObjectOutputStream(clientSocket.getOutputStream());
-                                outObj.writeObject(new ActionWrapper(name + "_" + product + "_" + quantity, action,jobID));
-                                outObj.flush();
+                                out = new ObjectOutputStream(clientSocket.getOutputStream());
+                                out.writeObject(new ActionWrapper(name + "_" + product + "_" + quantity, action,jobID));
+                                out.flush();
 
                                 break;
 
@@ -145,12 +147,11 @@ public class Client implements Runnable {
                             System.out.print("> ");
                             product = in.nextLine();
 
-                            try {
+                            try (Socket clientSocket = new Socket(host, port);){
 
-                                Socket clientSocket = new Socket(host, port);
-                                ObjectOutputStream outObj = new ObjectOutputStream(clientSocket.getOutputStream());
-                                outObj.writeObject(new ActionWrapper(name + "_" + product, action,jobID));
-                                outObj.flush();
+                                out = new ObjectOutputStream(clientSocket.getOutputStream());
+                                out.writeObject(new ActionWrapper(name + "_" + product, action,jobID));
+                                out.flush();
 
                                 break;
 
@@ -190,12 +191,11 @@ public class Client implements Runnable {
                                 in.nextLine();
                             } while (price <= 0);
 
-                            try {
+                            try (Socket clientSocket = new Socket(host, port);){
 
-                                Socket clientSocket = new Socket(host, port);
-                                ObjectOutputStream outObj = new ObjectOutputStream(clientSocket.getOutputStream());
-                                outObj.writeObject(new ActionWrapper(storeName + "_" + productName + "_" + productType + "_" + price + "_" + availableAmount, action,jobID));
-                                outObj.flush();
+                                out = new ObjectOutputStream(clientSocket.getOutputStream());
+                                out.writeObject(new ActionWrapper(storeName + "_" + productName + "_" + productType + "_" + price + "_" + availableAmount, action,jobID));
+                                out.flush();
 
                                 break;
 
@@ -216,12 +216,11 @@ public class Client implements Runnable {
                             System.out.print("> ");
                             productName = in.nextLine();
 
-                            try {
+                            try (Socket clientSocket = new Socket(host, port);){
 
-                                Socket clientSocket = new Socket(host, port);
-                                ObjectOutputStream outObj = new ObjectOutputStream(clientSocket.getOutputStream());
-                                outObj.writeObject(new ActionWrapper(storeName + "_" + productName, action,jobID));
-                                outObj.flush();
+                                out = new ObjectOutputStream(clientSocket.getOutputStream());
+                                out.writeObject(new ActionWrapper(storeName + "_" + productName, action,jobID));
+                                out.flush();
 
                                 break;
 
@@ -239,12 +238,11 @@ public class Client implements Runnable {
                             System.out.print("> ");
                             category = in.nextLine();
 
-                            try {
+                            try (Socket clientSocket = new Socket(host, port);){
 
-                                Socket clientSocket = new Socket(host, port);
-                                ObjectOutputStream outObj = new ObjectOutputStream(clientSocket.getOutputStream());
-                                outObj.writeObject(new ActionWrapper(category, action,jobID));
-                                outObj.flush();
+                                out = new ObjectOutputStream(clientSocket.getOutputStream());
+                                out.writeObject(new ActionWrapper(category, action,jobID));
+                                out.flush();
 
                                 break;
 
@@ -262,12 +260,11 @@ public class Client implements Runnable {
                             System.out.print("> ");
                             category = in.nextLine();
 
-                            try {
+                            try (Socket clientSocket = new Socket(host, port);){
 
-                                Socket clientSocket = new Socket(host, port);
-                                ObjectOutputStream outObj = new ObjectOutputStream(clientSocket.getOutputStream());
-                                outObj.writeObject(new ActionWrapper(category, action,jobID));
-                                outObj.flush();
+                                out = new ObjectOutputStream(clientSocket.getOutputStream());
+                                out.writeObject(new ActionWrapper(category, action,jobID));
+                                out.flush();
 
                                 break;
 
@@ -326,12 +323,11 @@ public class Client implements Runnable {
                             longitude1 = String.valueOf(longitude);
                             latitude1 = String.valueOf(latitude);
 
-                            try {
+                            try (Socket clientSocket = new Socket(host, port);){
 
-                                Socket clientSocket = new Socket(host, port);
-                                ObjectOutputStream outObj = new ObjectOutputStream(clientSocket.getOutputStream());
-                                outObj.writeObject(new ActionWrapper(longitude1 + "_" + latitude1, action, jobID));
-                                outObj.flush();
+                                out = new ObjectOutputStream(clientSocket.getOutputStream());
+                                out.writeObject(new ActionWrapper(longitude1 + "_" + latitude1, action, jobID));
+                                out.flush();
                                 System.out.println(clientSocket.getLocalSocketAddress());
 
                                 printSearchResults(clientSocket);
@@ -383,12 +379,11 @@ public class Client implements Runnable {
                             System.out.print("> ");
                             preference = in.nextLine();
 
-                            try {
+                            try (Socket clientSocket = new Socket(host, port);){
 
-                                Socket clientSocket = new Socket(host, port);
-                                ObjectOutputStream outObj = new ObjectOutputStream(clientSocket.getOutputStream());
-                                outObj.writeObject(new ActionWrapper(longitude1 + "_" + latitude1 + "_" + preference, action, jobID));
-                                outObj.flush();
+                                out = new ObjectOutputStream(clientSocket.getOutputStream());
+                                out.writeObject(new ActionWrapper(longitude1 + "_" + latitude1 + "_" + preference, action, jobID));
+                                out.flush();
                                 System.out.println(clientSocket.getLocalSocketAddress());
 
                                 printSearchResults(clientSocket);
@@ -453,12 +448,11 @@ public class Client implements Runnable {
 
                             preference = String.valueOf(stars);
 
-                            try {
+                            try (Socket clientSocket = new Socket(host, port);){
 
-                                Socket clientSocket = new Socket(host, port);
-                                ObjectOutputStream outObj = new ObjectOutputStream(clientSocket.getOutputStream());
-                                outObj.writeObject(new ActionWrapper(longitude1 + "_" + latitude1 + "_" + preference, action, jobID));
-                                outObj.flush();
+                                out = new ObjectOutputStream(clientSocket.getOutputStream());
+                                out.writeObject(new ActionWrapper(longitude1 + "_" + latitude1 + "_" + preference, action, jobID));
+                                out.flush();
 
                                 printSearchResults(clientSocket);
                                 break;
@@ -509,12 +503,11 @@ public class Client implements Runnable {
                                 preference = in.nextLine();
                             } while (!preference.equals("$") && !preference.equals("$$") && !preference.equals("$$$"));
 
-                            try {
+                            try (Socket clientSocket = new Socket(host, port);){
 
-                                Socket clientSocket = new Socket(host, port);
-                                ObjectOutputStream outObj = new ObjectOutputStream(clientSocket.getOutputStream());
-                                outObj.writeObject(new ActionWrapper(longitude1 + "_" + latitude1 + "_" + preference, action, jobID));
-                                outObj.flush();
+                                out = new ObjectOutputStream(clientSocket.getOutputStream());
+                                out.writeObject(new ActionWrapper(longitude1 + "_" + latitude1 + "_" + preference, action, jobID));
+                                out.flush();
 
                                 printSearchResults(clientSocket);
                                 break;
@@ -567,12 +560,11 @@ public class Client implements Runnable {
                             System.out.print("> ");
                             product = in.nextLine();
 
-                            try {
+                            try (Socket clientSocket = new Socket(host, port);){
 
-                                Socket clientSocket = new Socket(host, port);
-                                ObjectOutputStream outObj = new ObjectOutputStream(clientSocket.getOutputStream());
-                                outObj.writeObject(new ActionWrapper(longitude1 + "_" + latitude1 + "_" + store + "_" + product, action, jobID));
-                                outObj.flush();
+                                out = new ObjectOutputStream(clientSocket.getOutputStream());
+                                out.writeObject(new ActionWrapper(longitude1 + "_" + latitude1 + "_" + store + "_" + product, action, jobID));
+                                out.flush();
 
                                 printSearchResults(clientSocket);
                                 break;
@@ -639,12 +631,11 @@ public class Client implements Runnable {
 
                             preference = String.valueOf(stars);
 
-                            try {
+                            try (Socket clientSocket = new Socket(host, port);){
 
-                                Socket clientSocket = new Socket(host, port);
-                                ObjectOutputStream outObj = new ObjectOutputStream(clientSocket.getOutputStream());
-                                outObj.writeObject(new ActionWrapper(longitude1 + "_" + latitude1 + "_" + store + "_" + preference, action, jobID));
-                                outObj.flush();
+                                out = new ObjectOutputStream(clientSocket.getOutputStream());
+                                out.writeObject(new ActionWrapper(longitude1 + "_" + latitude1 + "_" + store + "_" + preference, action, jobID));
+                                out.flush();
 
                                 printSearchResults(clientSocket);
                                 break;
@@ -674,8 +665,8 @@ public class Client implements Runnable {
 
     private static void printSearchResults(Socket clientSocket) throws IOException, ClassNotFoundException {
 
-        ObjectInputStream inObj = new ObjectInputStream(clientSocket.getInputStream());
-        Object obj = inObj.readObject();
+        ObjectInputStream in = new ObjectInputStream(clientSocket.getInputStream());
+        Object obj = in.readObject();
         ActionWrapper w = (ActionWrapper) obj;
         String resAction = w.getAction();
         Object resObj = w.getObject();

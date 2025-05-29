@@ -5,7 +5,6 @@ package com.example.deliveryapp.util;
  * @author Christina Perifana   || p3220160@aueb.gr
  */
 
-import com.google.gson.*;
 import com.example.deliveryapp.master.ActionsForMaster;
 import com.example.deliveryapp.reducer.ActionsForReducer;
 import com.example.deliveryapp.worker.ActionsForWorkers;
@@ -19,11 +18,14 @@ public class ClientHandler implements Runnable {
     private static final List<AbstractMap.SimpleEntry<String, Store>> allMappedResults = Collections.synchronizedList(new ArrayList<>());
     private static volatile int workersResponded = 0;
     private static final Object reducerLock = new Object();
-    private Socket socket;
+    private final Socket socket;
     private HashMap<String,Store> hashMap;
+    private ObjectOutputStream out;
+    private ObjectInputStream in;
 
     private static final Map<String, List<Store>> resultsMap = Collections.synchronizedMap(new HashMap<>());
     private static final Object resultsLock = new Object();
+    private static final Map<String, Object> jobMonitors = Collections.synchronizedMap(new HashMap<>());
 
     public ClientHandler(Socket socket) { this.socket = socket; }
 
@@ -37,7 +39,13 @@ public class ClientHandler implements Runnable {
             resultsMap.put(jobID, results);
             System.out.println("Printing jobID: " + resultsMap.keySet());
             System.out.println("Current keys in map: " + resultsMap.size());
-            resultsLock.notifyAll();
+
+            Object monitor = jobMonitors.get(jobID);
+            if (monitor != null) {
+                synchronized (monitor) {
+                    monitor.notifyAll();
+                }
+            }
         }
     }
 
@@ -45,22 +53,19 @@ public class ClientHandler implements Runnable {
 
         synchronized (reducerLock) {
 
+            System.out.println("Starting map, workers responded: " + workersResponded);
             System.out.println("JobID: " + jobID);
             System.out.println("ResultList: " + resultList);
 
             int currentExpectedWorkers = Config.getNumberOfWorkers();
 
             if (!resultList.isEmpty()) {
-
                 allMappedResults.addAll(resultList);
-                workersResponded++;
-
             } else {
-
-                workersResponded++;
                 System.out.println("Searching stores...");
-
             }
+
+            workersResponded++;
 
             if (workersResponded >= currentExpectedWorkers) {
 
@@ -68,6 +73,7 @@ public class ClientHandler implements Runnable {
 
                 List<AbstractMap.SimpleEntry<String, Store>> resultsToProcess = new ArrayList<>(allMappedResults);
                 allMappedResults.clear();
+                System.out.println("workers responded: " + workersResponded);
                 workersResponded = 0;
 
                 Map<String, List<Store>> grouped = new HashMap<>();
@@ -101,55 +107,122 @@ public class ClientHandler implements Runnable {
 
     public void run() {
 
-        Store store;
-        String input = "";
-        String action,opt;
-        Object obj;
-        ActionWrapper wrapper;
+        ObjectOutputStream out = null;
+        ObjectInputStream in = null;
+        String jobID, opt, input = "";
 
-        while (true){
+        while (true) {
 
             try {
+                out = new ObjectOutputStream(socket.getOutputStream());
+                in = new ObjectInputStream(socket.getInputStream());
 
-                ObjectOutputStream out = new ObjectOutputStream(socket.getOutputStream());
-                ObjectInputStream inObj = new ObjectInputStream(socket.getInputStream());
-                Object received = inObj.readObject();
+                Object received = in.readObject();
 
-                wrapper = (ActionWrapper) received;
-                obj = wrapper.getObject();
-                action = wrapper.getAction();
-                String jobID = wrapper.getJobID();
+                ActionWrapper wrapper = (ActionWrapper) received;
+                Object obj = wrapper.getObject();
+                String action = wrapper.getAction();
+                jobID = wrapper.getJobID();
                 System.out.println("JobID: " + jobID);
 
-                int port = socket.getLocalPort();
+
+                int localPort = socket.getLocalPort();
                 int numOfWorkers = Config.getNumberOfWorkers();
 
-                switch (port){
+                switch (localPort) {
 
                     case 5000:
 
                         System.out.println(socket.getPort());
 
-                        if (action.equalsIgnoreCase("json")){
+                        if (action.startsWith("mapped_store_results")) {
 
-                            store = (Store) obj;
+                            if (action.equalsIgnoreCase("mapped_store_results")) {
 
-                            if (store!=null) {
+                                List<Store> finalResults = (List<Store>) wrapper.getObject();
+                                String receivedJobID = wrapper.getJobID();
 
-                                int workerId = HashStore.getWorkerID(store.getStoreName(),numOfWorkers);
-                                int workerPort = 5001 + workerId;
+                                System.out.println(receivedJobID);
+                                System.out.println(finalResults);
 
-                                new Thread(new ActionsForMaster("localhost", workerPort, wrapper, workerId)).start();
+                                addFinalResults(finalResults, receivedJobID);
+//                                System.out.println("Flushing to: " + socket.getRemoteSocketAddress());
+//                                ActionWrapper responseToClient = new ActionWrapper(finalResults, "final_results", receivedJobID);
+//                                out.writeObject(responseToClient);
+//                                out.flush();
+
+                                return;
+
+                            } else if (action.equalsIgnoreCase("mapped_store_results1")) {
+
+                                List<Store> finalResults = (List<Store>) wrapper.getObject();
+                                String receivedJobID = wrapper.getJobID();
+                                int total = 0;
+
+                                System.out.println(receivedJobID);
+
+                                for (Store s : finalResults) {
+                                    s.setStoreSales();
+                                    System.out.println(s.getStoreName() + " : " + s.getStoreSales());
+                                    total += s.getStoreSales();
+                                }
+
+                                System.out.println("Total : " + total);
+
+                                return;
 
                             } else {
 
-                                System.out.println("[Handler]->[Master] Message received: " + input);
+                                String[] parts1 = action.split("_", 4);
+
+                                List<Store> finalResults = (List<Store>) wrapper.getObject();
+                                String receivedJobID = wrapper.getJobID();
+                                int total = 0;
+
+                                System.out.println(receivedJobID);
+
+                                for (Store s : finalResults) {
+                                    for (Product p : s.getProducts()) {
+                                        if (p.getProductType().equalsIgnoreCase(parts1[3])) {
+                                            System.out.println(s.getStoreName() + " : " + p.getProductSales());
+                                            total += p.getProductSales();
+                                        }
+
+                                    }
+                                }
+
+                                System.out.println("Total : " + total);
+
+                                return;
 
                             }
 
-                        } else {
+                        } else if (action.equalsIgnoreCase("json") || // Manager actions
+                                action.equalsIgnoreCase("add_available_product") ||
+                                action.equalsIgnoreCase("remove_available_product") ||
+                                action.equalsIgnoreCase("add_new_product") ||
+                                action.equalsIgnoreCase("remove_old_product")) {
 
-                            if (action.equalsIgnoreCase("add_available_product")){
+
+                            if (action.equalsIgnoreCase("json")) {
+
+                                Store store = (Store) obj;
+
+                                if (store != null) {
+
+                                    int workerId = HashStore.getWorkerID(store.getStoreName(), numOfWorkers);
+                                    int workerPort = 5001 + workerId;
+
+                                    new Thread(new ActionsForMaster("localhost", workerPort, wrapper, workerId)).start();
+
+                                } else {
+
+                                    System.out.println("[Handler]->[Master] Message received: " + input);
+
+                                }
+
+
+                            } else if (action.equalsIgnoreCase("add_available_product")) {
 
                                 opt = (String) obj;
                                 String[] parts;
@@ -158,12 +231,12 @@ public class ClientHandler implements Runnable {
                                 parts = opt.split("_", 3);
 
                                 storeName = parts[0];
-                                int workerId = HashStore.getWorkerID(storeName,numOfWorkers);
+                                int workerId = HashStore.getWorkerID(storeName, numOfWorkers);
                                 int workerPort = 5001 + workerId;
 
                                 new Thread(new ActionsForMaster("localhost", workerPort, wrapper, workerId)).start();
 
-                            } else if (action.equalsIgnoreCase("remove_available_product")){
+                            } else if (action.equalsIgnoreCase("remove_available_product")) {
 
                                 opt = (String) obj;
                                 String[] parts;
@@ -172,12 +245,12 @@ public class ClientHandler implements Runnable {
                                 parts = opt.split("_", 2);
 
                                 storeName = parts[0];
-                                int workerId = HashStore.getWorkerID(storeName,numOfWorkers);
+                                int workerId = HashStore.getWorkerID(storeName, numOfWorkers);
                                 int workerPort = 5001 + workerId;
 
                                 new Thread(new ActionsForMaster("localhost", workerPort, wrapper, workerId)).start();
 
-                            } else if (action.equalsIgnoreCase("add_new_product")){
+                            } else if (action.equalsIgnoreCase("add_new_product")) {
 
                                 opt = (String) obj;
                                 String[] parts;
@@ -186,7 +259,7 @@ public class ClientHandler implements Runnable {
                                 parts = opt.split("_", 5);
 
                                 storeName = parts[0];
-                                int workerId = HashStore.getWorkerID(storeName,numOfWorkers);
+                                int workerId = HashStore.getWorkerID(storeName, numOfWorkers);
                                 int workerPort = 5001 + workerId;
 
                                 new Thread(new ActionsForMaster("localhost", workerPort, wrapper, workerId)).start();
@@ -204,149 +277,43 @@ public class ClientHandler implements Runnable {
                                 int workerPort = 5001 + workerId;
 
                                 new Thread(new ActionsForMaster("localhost", workerPort, wrapper, workerId)).start();
+                            }
+
+
+                        } else if (action.equalsIgnoreCase("showcase_stores") || action.equalsIgnoreCase("search_food_preference") ||
+                                action.equalsIgnoreCase("search_ratings") || action.equalsIgnoreCase("search_price_range") ||
+                                action.equalsIgnoreCase("purchase_product") || action.equalsIgnoreCase("rate_store")) {
+
+                            if (action.equalsIgnoreCase("purchase_product")) {
+
+                                opt = (String) obj;
+                                String[] parts;
+                                String storeName;
+
+                                parts = opt.split("_", 5);
+
+                                storeName = parts[2];
+                                int workerId = HashStore.getWorkerID(storeName, numOfWorkers);
+                                int workerPort = 5001 + workerId;
+
+                                new Thread(new ActionsForMaster("localhost", workerPort, wrapper, workerId)).start();
+
+                            } else if (action.equalsIgnoreCase("rate_store")) {
+
+                                opt = (String) obj;
+                                String[] parts;
+                                String storeName;
+
+                                parts = opt.split("_", 5);
+
+                                storeName = parts[2];
+                                int workerId = HashStore.getWorkerID(storeName, numOfWorkers);
+                                int workerPort = 5001 + workerId;
+
+                                new Thread(new ActionsForMaster("localhost", workerPort, wrapper, workerId)).start();
 
                             } else if (action.equalsIgnoreCase("showcase_stores") || action.equalsIgnoreCase("search_food_preference") ||
-                                       action.equalsIgnoreCase("search_ratings") || action.equalsIgnoreCase("search_price_range") ||
-                                       action.equalsIgnoreCase("purchase_product") || action.equalsIgnoreCase("rate_store")) {
-
-                                if (action.equalsIgnoreCase("purchase_product")) {
-
-                                    opt = (String) obj;
-                                    String[] parts;
-                                    String storeName;
-
-                                    parts = opt.split("_", 5);
-
-                                    storeName = parts[2];
-                                    int workerId = HashStore.getWorkerID(storeName, numOfWorkers);
-                                    int workerPort = 5001 + workerId;
-
-                                    new Thread(new ActionsForMaster("localhost", workerPort, wrapper, workerId)).start();
-
-                                } else if (action.equalsIgnoreCase("rate_store")) {
-
-                                    opt = (String) obj;
-                                    String[] parts;
-                                    String storeName;
-
-                                    parts = opt.split("_", 5);
-
-                                    storeName = parts[2];
-                                    int workerId = HashStore.getWorkerID(storeName, numOfWorkers);
-                                    int workerPort = 5001 + workerId;
-
-                                    new Thread(new ActionsForMaster("localhost", workerPort, wrapper, workerId)).start();
-
-                                } else if (action.equalsIgnoreCase("showcase_stores") || action.equalsIgnoreCase("search_food_preference") ||
-                                           action.equalsIgnoreCase("search_ratings") || action.equalsIgnoreCase("search_price_range")) {
-
-                                    for (int i = 1; i <= numOfWorkers; i++) {
-                                        ActionWrapper clonedWrapper = new ActionWrapper(obj, action, jobID);
-                                        new Thread(new ActionsForMaster("localhost", 5001 + i, clonedWrapper, i)).start();
-                                    }
-
-                                }
-
-                                List<Store> clientResults = null;
-
-
-                                synchronized (resultsLock) {
-
-                                    while (!resultsMap.containsKey(jobID)) {
-
-                                        try {
-
-                                            System.out.println("Waiting for results...");
-
-                                            resultsLock.wait(500);
-
-                                        } catch (InterruptedException e) {
-
-                                            Thread.currentThread().interrupt();
-                                            System.err.println("Interrupted while waiting for results...");
-
-                                            break;
-
-                                        }
-
-                                    }
-
-                                    List<Store> resObject = resultsMap.remove(jobID);
-                                    clientResults = resObject;
-                                    System.out.println("Printing "+ clientResults);
-
-                                }
-
-                                ActionWrapper responseToClient = new ActionWrapper(ServerDataLoader.populateStoreLogosForClient(clientResults), "final_results", jobID);
-                                out.writeObject(responseToClient);
-                                out.flush();
-                                socket.close();
-
-                                return;
-
-                            } else if (action.startsWith("mapped_store_results")) {
-
-                                if (action.equalsIgnoreCase("mapped_store_results")){
-
-                                    List<Store> finalResults = (List<Store>) wrapper.getObject();
-                                    String receivedJobID = wrapper.getJobID();
-
-                                    System.out.println(receivedJobID);
-                                    System.out.println(finalResults);
-
-                                    addFinalResults(finalResults, receivedJobID);
-                                    System.out.println("Flushing to: " + socket.getRemoteSocketAddress());
-                                    ActionWrapper responseToClient = new ActionWrapper(finalResults, "final_results",receivedJobID);
-                                    out.writeObject(responseToClient);
-                                    out.flush();
-
-                                    return;
-
-                                } else if (action.equalsIgnoreCase("mapped_store_results1")){
-
-                                    List<Store> finalResults = (List<Store>) wrapper.getObject();
-                                    String receivedJobID = wrapper.getJobID();
-                                    int total = 0;
-
-                                    System.out.println(receivedJobID);
-
-                                    for (Store s : finalResults){
-                                        s.setStoreSales();
-                                        System.out.println(s.getStoreName()+" : "+ s.getStoreSales());
-                                        total += s.getStoreSales();
-                                    }
-
-                                    System.out.println("Total : "+ total);
-
-                                    return;
-
-                                } else {
-
-                                    String[] parts1 = action.split("_", 4);
-
-                                    List<Store> finalResults = (List<Store>) wrapper.getObject();
-                                    String receivedJobID = wrapper.getJobID();
-                                    int total = 0;
-
-                                    System.out.println(receivedJobID);
-
-                                    for (Store s : finalResults){
-                                        for (Product p : s.getProducts()){
-                                            if (p.getProductType().equalsIgnoreCase(parts1[3])){
-                                                System.out.println(s.getStoreName()+" : "+ p.getProductSales());
-                                                total += p.getProductSales();
-                                            }
-
-                                        }
-                                    }
-
-                                    System.out.println("Total : "+ total);
-
-                                    return;
-
-                                }
-
-                            } else if (action.equalsIgnoreCase("total_sales_store") || action.equalsIgnoreCase("total_sales_product")){
+                                    action.equalsIgnoreCase("search_ratings") || action.equalsIgnoreCase("search_price_range")) {
 
                                 for (int i = 1; i <= numOfWorkers; i++) {
                                     ActionWrapper clonedWrapper = new ActionWrapper(obj, action, jobID);
@@ -355,15 +322,59 @@ public class ClientHandler implements Runnable {
 
                             }
 
+                            List<Store> clientResults = null;
+
+
+                            synchronized (resultsLock) {
+
+                                while (!resultsMap.containsKey(jobID)) {
+
+                                    try {
+
+                                        System.out.println("Waiting for results...");
+
+                                        resultsLock.wait(500);
+
+                                    } catch (InterruptedException e) {
+
+                                        Thread.currentThread().interrupt();
+                                        System.err.println("Interrupted while waiting for results...");
+
+                                        break;
+
+                                    }
+
+                                }
+
+                                List<Store> resObject = resultsMap.remove(jobID);
+                                clientResults = resObject;
+                                System.out.println("Printing " + clientResults);
+
+                            }
+
+                            ActionWrapper responseToClient = new ActionWrapper(ServerDataLoader.populateStoreLogosForClient(clientResults), "final_results", jobID);
+                            out.writeObject(responseToClient);
+                            out.flush();
+
+                            return;
+
+                        } else if (action.equalsIgnoreCase("total_sales_store") || action.equalsIgnoreCase("total_sales_product")) {
+
+                            for (int i = 1; i <= numOfWorkers; i++) {
+                                ActionWrapper clonedWrapper = new ActionWrapper(obj, action, jobID);
+                                new Thread(new ActionsForMaster("localhost", 5001 + i, clonedWrapper, i)).start();
+                            }
+
                         }
 
                         break;
+
 
                     case 5001:
 
                         System.out.println(socket.getPort());
 
-                        if (action.startsWith("mapped_store_results") || action.equalsIgnoreCase("confirmation_from_worker") ) {
+                        if (action.startsWith("mapped_store_results") || action.equalsIgnoreCase("confirmation_from_worker")) {
 
                             List<AbstractMap.SimpleEntry<String, Store>> resultList = null;
                             String confirmFromWorker = null;
@@ -390,141 +401,148 @@ public class ClientHandler implements Runnable {
 
                         System.out.println(socket.getPort());
 
-                        if (action.equalsIgnoreCase("json")){
+                        if (action.equalsIgnoreCase("json")) {
 
-                            store = (Store) obj;
+                            Store store = (Store) obj;
 
                             if (store != null) {
 
-                                int workerId = HashStore.getWorkerID(store.getStoreName(),numOfWorkers);
+                                int workerId = HashStore.getWorkerID(store.getStoreName(), numOfWorkers);
 
-                                new Thread(new ActionsForWorkers("localhost", 5001,wrapper,hashMap,workerId)).start();
+                                new Thread(new ActionsForWorkers("localhost", 5001, wrapper, hashMap, workerId)).start();
 
                             } else {
                                 System.out.println("[Handler] Message received: " + input);
                             }
 
-                        } else if (action.equalsIgnoreCase("add_available_product")){
+                        } else if (action.equalsIgnoreCase("add_available_product")) {
 
                             opt = (String) obj;
                             String[] parts = opt.split("_", 3);
                             String storeName = parts[0];
 
-                            int workerId = HashStore.getWorkerID(storeName,numOfWorkers);
+                            int workerId = HashStore.getWorkerID(storeName, numOfWorkers);
 
-                            new Thread(new ActionsForWorkers("localhost", 5001,wrapper,hashMap,workerId)).start();
+                            new Thread(new ActionsForWorkers("localhost", 5001, wrapper, hashMap, workerId)).start();
 
-                        } else if (action.equalsIgnoreCase("remove_available_product")){
+                        } else if (action.equalsIgnoreCase("remove_available_product")) {
 
                             opt = (String) obj;
                             String[] parts = opt.split("_", 2);
                             String storeName = parts[0];
 
-                            int workerId = HashStore.getWorkerID(storeName,numOfWorkers);
+                            int workerId = HashStore.getWorkerID(storeName, numOfWorkers);
 
-                            new Thread(new ActionsForWorkers("localhost", 5001,wrapper,hashMap,workerId)).start();
+                            new Thread(new ActionsForWorkers("localhost", 5001, wrapper, hashMap, workerId)).start();
 
-                        } else if (action.equalsIgnoreCase("add_new_product")){
+                        } else if (action.equalsIgnoreCase("add_new_product")) {
 
                             opt = (String) obj;
                             String[] parts = opt.split("_", 5);
                             String storeName = parts[0];
 
-                            int workerId = HashStore.getWorkerID(storeName,numOfWorkers);
+                            int workerId = HashStore.getWorkerID(storeName, numOfWorkers);
 
-                            new Thread(new ActionsForWorkers("localhost", 5001,wrapper,hashMap,workerId)).start();
+                            new Thread(new ActionsForWorkers("localhost", 5001, wrapper, hashMap, workerId)).start();
 
-                        } else if (action.equalsIgnoreCase("remove_old_product")){
+                        } else if (action.equalsIgnoreCase("remove_old_product")) {
 
                             opt = (String) obj;
                             String[] parts = opt.split("_", 2);
                             String storeName = parts[0];
 
-                            int workerId = HashStore.getWorkerID(storeName,numOfWorkers);
+                            int workerId = HashStore.getWorkerID(storeName, numOfWorkers);
 
-                            new Thread(new ActionsForWorkers("localhost", 5001,wrapper,hashMap,workerId)).start();
+                            new Thread(new ActionsForWorkers("localhost", 5001, wrapper, hashMap, workerId)).start();
 
-                        } else if (action.equalsIgnoreCase("showcase_stores")){
+                        } else if (action.equalsIgnoreCase("showcase_stores")) {
 
                             opt = (String) obj;
                             String[] parts = opt.split("_", 3);
 
                             int workerId = Integer.parseInt(parts[2]);
 
-                            new Thread(new ActionsForWorkers("localhost", 5001,wrapper,hashMap,workerId)).start();
+                            new Thread(new ActionsForWorkers("localhost", 5001, wrapper, hashMap, workerId)).start();
 
-                        } else if (action.equalsIgnoreCase("search_food_preference")){
-
-                            opt = (String) obj;
-                            String[] parts = opt.split("_", 4);
-
-                            int workerId = Integer.parseInt(parts[3]);
-
-                            new Thread(new ActionsForWorkers("localhost", 5001,wrapper,hashMap,workerId)).start();
-
-                        } else if (action.equalsIgnoreCase("search_ratings")){
+                        } else if (action.equalsIgnoreCase("search_food_preference")) {
 
                             opt = (String) obj;
                             String[] parts = opt.split("_", 4);
 
                             int workerId = Integer.parseInt(parts[3]);
 
-                            new Thread(new ActionsForWorkers("localhost", 5001,wrapper,hashMap,workerId)).start();
+                            new Thread(new ActionsForWorkers("localhost", 5001, wrapper, hashMap, workerId)).start();
 
-                        } else if (action.equalsIgnoreCase("search_price_range")){
+                        } else if (action.equalsIgnoreCase("search_ratings")) {
 
                             opt = (String) obj;
                             String[] parts = opt.split("_", 4);
 
                             int workerId = Integer.parseInt(parts[3]);
 
-                            new Thread(new ActionsForWorkers("localhost", 5001,wrapper,hashMap,workerId)).start();
+                            new Thread(new ActionsForWorkers("localhost", 5001, wrapper, hashMap, workerId)).start();
 
-                        } else if (action.equalsIgnoreCase("purchase_product")){
+                        } else if (action.equalsIgnoreCase("search_price_range")) {
+
+                            opt = (String) obj;
+                            String[] parts = opt.split("_", 4);
+
+                            int workerId = Integer.parseInt(parts[3]);
+
+                            new Thread(new ActionsForWorkers("localhost", 5001, wrapper, hashMap, workerId)).start();
+
+                        } else if (action.equalsIgnoreCase("purchase_product")) {
 
                             opt = (String) obj;
                             String[] parts = opt.split("_", 5);
 
                             int workerId = Integer.parseInt(parts[4]);
 
-                            new Thread(new ActionsForWorkers("localhost", 5001,wrapper,hashMap,workerId)).start();
+                            new Thread(new ActionsForWorkers("localhost", 5001, wrapper, hashMap, workerId)).start();
 
-                        } else if (action.equalsIgnoreCase("rate_store")){
+                        } else if (action.equalsIgnoreCase("rate_store")) {
 
                             opt = (String) obj;
                             String[] parts = opt.split("_", 5);
 
                             int workerId = Integer.parseInt(parts[4]);
 
-                            new Thread(new ActionsForWorkers("localhost", 5001,wrapper,hashMap,workerId)).start();
+                            new Thread(new ActionsForWorkers("localhost", 5001, wrapper, hashMap, workerId)).start();
 
-                        } else if (action.equalsIgnoreCase("total_sales_store") || action.equalsIgnoreCase("total_sales_product")){
+                        } else if (action.equalsIgnoreCase("total_sales_store") || action.equalsIgnoreCase("total_sales_product")) {
 
                             opt = (String) obj;
                             String[] parts = opt.split("_", 2);
 
                             int workerId = Integer.parseInt(parts[1]);
 
-                            new Thread(new ActionsForWorkers("localhost", 5001,wrapper,hashMap,workerId)).start();
+                            new Thread(new ActionsForWorkers("localhost", 5001, wrapper, hashMap, workerId)).start();
 
                         }
 
                         break;
-
                 }
 
-                break;
-
-            } catch (JsonSyntaxException e) {
-                e.printStackTrace();
-            } catch (IOException ignored) {
 
             } catch (ClassNotFoundException e) {
                 throw new RuntimeException(e);
+            } catch (IOException e) {
+                System.err.println("[Handler] Error: " + e.getMessage());
+                e.printStackTrace();
+                try {
+                    if (in != null) in.close();
+                    if (out != null) out.close();
+                    socket.close();
+                } catch (IOException closeEx) {
+                    System.err.println("Error closing resources: " + closeEx.getMessage());
+                }
+                break;
             }
 
-        }
+            break;
 
+
+        }
     }
 
 }
