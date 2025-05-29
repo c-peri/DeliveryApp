@@ -35,8 +35,8 @@ public class ClientHandler implements Runnable {
     public static void addFinalResults(List<Store> results, String jobID) {
         synchronized (resultsLock) {
             resultsMap.put(jobID, results);
-            System.out.println("Printing jobID: " + resultsMap.get(jobID));
-            System.out.println("Current keys in map: " + resultsMap.keySet());
+            System.out.println("Printing jobID: " + resultsMap.keySet());
+            System.out.println("Current keys in map: " + resultsMap.size());
             resultsLock.notifyAll();
         }
     }
@@ -248,8 +248,7 @@ public class ClientHandler implements Runnable {
                                 }
 
                                 List<Store> clientResults = null;
-                                String message = null;
-                                String error = null;
+
 
                                 synchronized (resultsLock) {
 
@@ -265,7 +264,6 @@ public class ClientHandler implements Runnable {
 
                                             Thread.currentThread().interrupt();
                                             System.err.println("Interrupted while waiting for results...");
-                                            error = "Request interrupted";
 
                                             break;
 
@@ -273,39 +271,16 @@ public class ClientHandler implements Runnable {
 
                                     }
 
-                                    if (error == null) {
-
-                                        List<Store> resObject = resultsMap.remove(jobID);
-
-                                        if (resObject != null) {
-                                            clientResults = resObject;
-                                            System.out.println(clientResults);
-                                        } else {
-                                            error = "Unexpected result type";
-                                        }
-
-                                    }
+                                    List<Store> resObject = resultsMap.remove(jobID);
+                                    clientResults = resObject;
+                                    System.out.println("Printing "+ clientResults);
 
                                 }
 
-                                String responseAction;
-                                Object responseData;
-
-                                if (error != null) {
-
-                                    responseAction = "error";
-                                    responseData = error;
-
-                                } else {
-
-                                    responseAction = action;
-                                    responseData = clientResults;
-
-                                }
-
-                                ActionWrapper responseToClient = new ActionWrapper(responseData, responseAction, jobID);
+                                ActionWrapper responseToClient = new ActionWrapper(clientResults, "final_results", jobID);
                                 out.writeObject(responseToClient);
                                 out.flush();
+                                socket.close();
 
                                 return;
 
@@ -320,6 +295,10 @@ public class ClientHandler implements Runnable {
                                     System.out.println(finalResults);
 
                                     addFinalResults(finalResults, receivedJobID);
+                                    System.out.println("Flushing to: " + socket.getRemoteSocketAddress());
+                                    ActionWrapper responseToClient = new ActionWrapper(finalResults, "final_results",receivedJobID);
+                                    out.writeObject(responseToClient);
+                                    out.flush();
 
                                     return;
 

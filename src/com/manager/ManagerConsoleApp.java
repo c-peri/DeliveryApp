@@ -182,6 +182,10 @@ public class ManagerConsoleApp {
                     break;
                 }
 
+                if (!choice.equalsIgnoreCase("no") && !choice.equalsIgnoreCase("yes")){
+                    System.out.println("Invalid input, please try again. (Yes/No)");
+                }
+
             } while (!choice.equalsIgnoreCase("no") && !choice.equalsIgnoreCase("yes"));
 
         }
