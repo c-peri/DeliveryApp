@@ -23,9 +23,15 @@ public class ClientHandler implements Runnable {
     private ObjectOutputStream out;
     private ObjectInputStream in;
 
-    private static final Map<String, List<Store>> resultsMap = Collections.synchronizedMap(new HashMap<>());
     private static final Object resultsLock = new Object();
-    private static final Map<String, Object> jobMonitors = Collections.synchronizedMap(new HashMap<>());
+    private static final Map<String, JobTracker> jobTrackers = new HashMap<>();
+    private static final Object jobTrackersLock = new Object();
+
+    private static class JobTracker {
+        final Object monitor = new Object();
+        List<Store> result = null;
+    }
+
 
     public ClientHandler(Socket socket) {
         this.socket = socket;
@@ -37,17 +43,19 @@ public class ClientHandler implements Runnable {
     }
 
     public static void addFinalResults(List<Store> results, String jobID) {
-        synchronized (resultsLock) {
-            resultsMap.put(jobID, results);
-            System.out.println("Printing jobID: " + resultsMap.keySet());
-            System.out.println("Current keys in map: " + resultsMap.size());
-
-            Object monitor = jobMonitors.get(jobID);
-            if (monitor != null) {
-                synchronized (monitor) {
-                    monitor.notifyAll();
-                }
+        JobTracker tracker;
+        synchronized (jobTrackersLock) {
+            tracker = jobTrackers.get(jobID);
+            if (tracker == null) {
+                tracker = new JobTracker();
+                jobTrackers.put(jobID, tracker);
             }
+        }
+
+        synchronized (tracker.monitor) {
+            tracker.result = results;
+            System.out.println("[NOTIFY] Notifying monitor for JobID: " + jobID);
+            tracker.monitor.notifyAll();
         }
     }
 
@@ -99,7 +107,14 @@ public class ClientHandler implements Runnable {
                     reducedList.addAll(reducer.reduce("within_range", grouped.get("within_range")));
                 }
 
-                new Thread(new ActionsForReducer("localhost", 5000, action, reducedList, jobID)).start();
+                Thread thread = new Thread(new ActionsForReducer("localhost", 5000, action, reducedList, jobID));
+                thread.start();
+                try {
+                    thread.join();
+                } catch (InterruptedException e) {
+                    throw new RuntimeException(e);
+                }
+
 
             }
 
@@ -286,9 +301,6 @@ public class ClientHandler implements Runnable {
                                 action.equalsIgnoreCase("search_ratings") || action.equalsIgnoreCase("search_price_range") ||
                                 action.equalsIgnoreCase("purchase_product") || action.equalsIgnoreCase("rate_store")) {
 
-                            jobMonitors.putIfAbsent(jobID, new Object());
-                            Object currentJobMonitor = jobMonitors.get(jobID);
-
                             if (action.equalsIgnoreCase("purchase_product")) {
 
                                 opt = (String) obj;
@@ -326,30 +338,39 @@ public class ClientHandler implements Runnable {
                                 }
 
                             }
+                            List<Store> clientResults = Collections.synchronizedList(new ArrayList<>());
+                            JobTracker tracker;
+                            synchronized (jobTrackersLock) {
+                                tracker = jobTrackers.get(jobID);
+                                if (tracker == null) {
+                                    tracker = new JobTracker();
+                                    jobTrackers.put(jobID, tracker);
+                                }
+                            }
 
-
-                            List<Store> clientResults = null;
-
-                            synchronized (currentJobMonitor) {
-                                while (!resultsMap.containsKey(jobID)) {
-                                    System.out.println("Waiting for results for JobID: " + jobID + "...");
+                            synchronized (tracker.monitor) {
+                                while (tracker.result == null) {
                                     try {
-                                        currentJobMonitor.wait();
+                                        System.out.println("[WAIT] Waiting on jobID: " + jobID);
+                                        tracker.monitor.wait();
                                     } catch (InterruptedException e) {
                                         Thread.currentThread().interrupt();
-                                        System.err.println("Interrupted while waiting for results for JobID: " + jobID);
-                                        clientResults = Collections.emptyList();
-                                        break;
+                                        System.err.println("Interrupted while waiting on jobID: " + jobID);
+                                        return;
                                     }
-
                                 }
-                                clientResults = resultsMap.remove(jobID);
-                                jobMonitors.remove(jobID);
+
+                                clientResults = tracker.result;
+                                synchronized (jobTrackersLock) {
+                                    jobTrackers.remove(jobID); // Cleanup
+                                }
                             }
+
 
                             System.out.println("Printing " + clientResults);
 
                             ActionWrapper responseToClient = new ActionWrapper(ServerDataLoader.populateStoreLogosForClient(clientResults), "final_results", jobID);
+                            out.reset();
                             out.writeObject(responseToClient);
                             out.flush();
 

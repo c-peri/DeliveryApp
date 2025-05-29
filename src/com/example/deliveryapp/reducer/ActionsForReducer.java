@@ -34,19 +34,23 @@ public class ActionsForReducer implements Runnable {
         try (Socket socket = new Socket(masterHost, masterPort);
              ObjectOutputStream out = new ObjectOutputStream(socket.getOutputStream())) {
 
-            if (workerResults instanceof List<?>) {
+
+            if (workerResults instanceof String) {
+                ActionWrapper wrapper = new ActionWrapper(workerResults, "mapped_store_results", jobID);
+                out.writeObject(wrapper);
+                out.flush();
+
+                System.out.println("[Reducer->Master] Sent result to master");
+            } else {
                 ActionWrapper wrapper = new ActionWrapper(workerResults, this.action, jobID);
                 out.writeObject(wrapper);
                 out.flush();
-            } else if (workerResults instanceof String) {
-                ActionWrapper wrapper = new ActionWrapper(workerResults, "confirmation_from_worker", jobID);
-                out.writeObject(wrapper);
-                out.flush();
-            } else {
-                ActionWrapper wrapper = new ActionWrapper(workerResults, "unknown_result", jobID);
-                out.writeObject(wrapper);
-                out.flush();
+                System.out.println("[Reducer->Worker] Sent result to master");
+
             }
+
+            Thread.sleep(100);
+
 
         } catch (Exception e) {
             e.printStackTrace();
