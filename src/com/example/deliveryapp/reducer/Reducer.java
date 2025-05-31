@@ -5,11 +5,8 @@ package com.example.deliveryapp.reducer;
  * @author Christina Perifana   || p3220160@aueb.gr
  */
 
-import com.example.deliveryapp.util.Client;
 import com.example.deliveryapp.util.Config;
 import com.example.deliveryapp.util.Server;
-
-import static com.example.deliveryapp.util.IPConfig.IP_ADDRESS;
 
 public class Reducer {
 

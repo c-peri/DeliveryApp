@@ -34,7 +34,6 @@ public class ClientHandler implements Runnable {
         Object result = null;
     }
 
-
     public ClientHandler(Socket socket) {
         this.socket = socket;
         try {
@@ -52,7 +51,9 @@ public class ClientHandler implements Runnable {
     }
 
     public static void addFinalResults(List<Store> results, String jobID) {
+
         JobTracker tracker;
+
         synchronized (jobTrackersLock) {
             tracker = jobTrackers.get(jobID);
             if (tracker == null) {
@@ -66,6 +67,7 @@ public class ClientHandler implements Runnable {
             System.out.println("[NOTIFY] Notifying monitor for JobID: " + jobID);
             tracker.monitor.notifyAll();
         }
+
     }
 
     public static void addMappedResults(List<AbstractMap.SimpleEntry<String, Store>> resultList, String jobID, String action) {
@@ -137,399 +139,98 @@ public class ClientHandler implements Runnable {
         String opt;
         String input = "";
 
+        try {
 
+            Object received = in.readObject();
 
+            ActionWrapper wrapper = (ActionWrapper) received;
+            Object obj = wrapper.getObject();
+            String action = wrapper.getAction();
+            jobID = wrapper.getJobID();
+            Object lock = JobCoordinator.getLock(UUID.fromString(jobID));
 
-            try {
+            System.out.println("JobID: " + jobID);
 
-                Object received = in.readObject();
+            int localPort = socket.getLocalPort();
+            int numOfWorkers = Config.getNumberOfWorkers();
 
-                ActionWrapper wrapper = (ActionWrapper) received;
-                Object obj = wrapper.getObject();
-                String action = wrapper.getAction();
-                jobID = wrapper.getJobID();
-                Object lock = JobCoordinator.getLock(UUID.fromString(jobID));
+            switch (localPort) {
 
-                System.out.println("JobID: " + jobID);
+                case 5000:
 
-                int localPort = socket.getLocalPort();
-                int numOfWorkers = Config.getNumberOfWorkers();
+                    System.out.println(socket.getPort());
 
-                switch (localPort) {
+                    if (action.startsWith("mapped_store_results")) {
 
-                    case 5000:
+                        if (action.equalsIgnoreCase("mapped_store_results")) {
 
-                        System.out.println(socket.getPort());
+                            System.out.println(wrapper.getObject());
+                            System.out.println(wrapper.getAction());
 
-                        if (action.startsWith("mapped_store_results")) {
+                            List<Store> finalResults = (List<Store>) wrapper.getObject();
+                            String receivedJobID = wrapper.getJobID();
 
-                            if (action.equalsIgnoreCase("mapped_store_results")) {
-                                System.out.println(wrapper.getObject());
-                                System.out.println(wrapper.getAction());
-                                List<Store> finalResults = (List<Store>) wrapper.getObject();
-                                String receivedJobID = wrapper.getJobID();
+                            System.out.println(receivedJobID);
+                            System.out.println(finalResults);
 
-                                System.out.println(receivedJobID);
-                                System.out.println(finalResults);
+                            addFinalResults(finalResults, receivedJobID);
 
-                                addFinalResults(finalResults, receivedJobID);
+                            synchronized (lock) {
+                                JobCoordinator.setStatus(UUID.fromString(jobID), JobCoordinator.JobStatus.SEARCH_DONE);
+                                lock.notifyAll();
+                            }
 
-                                synchronized (lock) {
-                                    JobCoordinator.setStatus(UUID.fromString(jobID), JobCoordinator.JobStatus.SEARCH_DONE);
-                                    lock.notifyAll();
-                                }
+                            return;
 
-                                return;
+                        } else if (action.equalsIgnoreCase("mapped_store_results1")) {
 
-                            } else if (action.equalsIgnoreCase("mapped_store_results1")) {
+                            List<Store> finalResults = (List<Store>) wrapper.getObject();
+                            String receivedJobID = wrapper.getJobID();
+                            int total = 0;
 
-                                List<Store> finalResults = (List<Store>) wrapper.getObject();
-                                String receivedJobID = wrapper.getJobID();
-                                int total = 0;
+                            System.out.println(receivedJobID);
 
-                                System.out.println(receivedJobID);
+                            for (Store s : finalResults) {
 
-                                for (Store s : finalResults) {
-                                    s.setStoreSales();
-                                    System.out.println(s.getStoreName() + " : " + s.getStoreSales());
-                                    total += s.getStoreSales();
-                                }
+                                s.setStoreSales();
+                                System.out.println(s.getStoreName() + " : " + s.getStoreSales());
+                                total += s.getStoreSales();
 
-                                System.out.println("Total : " + total);
+                            }
 
-                                return;
+                            System.out.println("Total : " + total);
 
-                            } else {
+                            return;
 
-                                String[] parts1 = action.split("_", 4);
+                        } else {
 
-                                List<Store> finalResults = (List<Store>) wrapper.getObject();
-                                String receivedJobID = wrapper.getJobID();
-                                int total = 0;
+                            String[] parts1 = action.split("_", 4);
 
-                                System.out.println(receivedJobID);
+                            List<Store> finalResults = (List<Store>) wrapper.getObject();
+                            String receivedJobID = wrapper.getJobID();
+                            int total = 0;
 
-                                for (Store s : finalResults) {
-                                    for (Product p : s.getProducts()) {
-                                        if (p.getProductType().equalsIgnoreCase(parts1[3])) {
-                                            System.out.println(s.getStoreName() + " : " + p.getProductSales());
-                                            total += p.getProductSales();
-                                        }
+                            System.out.println(receivedJobID);
 
+                            for (Store s : finalResults) {
+                                for (Product p : s.getProducts()) {
+                                    if (p.getProductType().equalsIgnoreCase(parts1[3])) {
+                                        System.out.println(s.getStoreName() + " : " + p.getProductSales());
+                                        total += p.getProductSales();
                                     }
-                                }
-
-                                System.out.println("Total : " + total);
-
-                                return;
-
-                            }
-
-                        } else if (action.equalsIgnoreCase("json") || // Manager actions
-                                action.equalsIgnoreCase("add_available_product") ||
-                                action.equalsIgnoreCase("remove_available_product") ||
-                                action.equalsIgnoreCase("add_new_product") ||
-                                action.equalsIgnoreCase("remove_old_product")) {
-
-
-                            if (action.equalsIgnoreCase("json")) {
-
-                                Store store = (Store) obj;
-
-                                if (store != null) {
-
-                                    int workerId = HashStore.getWorkerID(store.getStoreName(), numOfWorkers);
-                                    int workerPort = 5001 + workerId;
-
-                                    new Thread(new ActionsForMaster(IP_ADDRESS, workerPort, wrapper, workerId)).start();
-
-                                } else {
-
-                                    System.out.println("[Handler]->[Master] Message received: " + input);
 
                                 }
-
-
-                            } else if (action.equalsIgnoreCase("add_available_product")) {
-
-                                opt = (String) obj;
-                                String[] parts;
-                                String storeName;
-
-                                parts = opt.split("_", 3);
-
-                                storeName = parts[0];
-                                int workerId = HashStore.getWorkerID(storeName, numOfWorkers);
-                                int workerPort = 5001 + workerId;
-
-                                new Thread(new ActionsForMaster(IP_ADDRESS, workerPort, wrapper, workerId)).start();
-
-                            } else if (action.equalsIgnoreCase("remove_available_product")) {
-
-                                opt = (String) obj;
-                                String[] parts;
-                                String storeName;
-
-                                parts = opt.split("_", 2);
-
-                                storeName = parts[0];
-                                int workerId = HashStore.getWorkerID(storeName, numOfWorkers);
-                                int workerPort = 5001 + workerId;
-
-                                new Thread(new ActionsForMaster(IP_ADDRESS, workerPort, wrapper, workerId)).start();
-
-                            } else if (action.equalsIgnoreCase("add_new_product")) {
-
-                                opt = (String) obj;
-                                String[] parts;
-                                String storeName;
-
-                                parts = opt.split("_", 5);
-
-                                storeName = parts[0];
-                                int workerId = HashStore.getWorkerID(storeName, numOfWorkers);
-                                int workerPort = 5001 + workerId;
-
-                                new Thread(new ActionsForMaster(IP_ADDRESS, workerPort, wrapper, workerId)).start();
-
-                            } else if (action.equalsIgnoreCase("remove_old_product")) {
-
-                                opt = (String) obj;
-                                String[] parts;
-                                String storeName;
-
-                                parts = opt.split("_", 2);
-
-                                storeName = parts[0];
-                                int workerId = HashStore.getWorkerID(storeName, numOfWorkers);
-                                int workerPort = 5001 + workerId;
-
-                                new Thread(new ActionsForMaster(IP_ADDRESS, workerPort, wrapper, workerId)).start();
-                            }
-                            Object clientResults;
-                            JobTracker tracker;
-                            synchronized (jobTrackersLock) {
-                                tracker = jobTrackers.get(jobID);
-                                if (tracker == null) {
-                                    tracker = new JobTracker();
-                                    jobTrackers.put(jobID, tracker);
-                                }
                             }
 
-                            synchronized (tracker.monitor) {
-                                while (tracker.result == null) {
-                                    try {
-                                        System.out.println("[WAIT] Waiting on jobID: " + jobID);
-                                        tracker.monitor.wait();
-                                    } catch (InterruptedException e) {
-                                        Thread.currentThread().interrupt();
-                                        System.err.println("Interrupted while waiting on jobID: " + jobID);
-                                        return;
-                                    }
-                                }
+                            System.out.println("Total : " + total);
 
-                                clientResults = tracker.result;
-                                synchronized (jobTrackersLock) {
-                                    jobTrackers.remove(jobID); // Cleanup
-                                }
-                            }
-
-
-                            System.out.println("Printing " + clientResults);
-
-                            if (clientResults instanceof List<?>) {
-                                ActionWrapper responseToClient = new ActionWrapper(ServerDataLoader.populateStoreLogosForClient((List<Store>) clientResults), "final_results", jobID);
-                                out.writeObject(responseToClient);
-                                out.flush();
-                            } else if (clientResults instanceof String) {
-                                ActionWrapper responseToClient = new ActionWrapper(clientResults, "confirmation_message", jobID);
-                                out.writeObject(responseToClient);
-                                out.flush();
-                            }
-                            synchronized (lock) {
-                                JobCoordinator.setStatus(UUID.fromString(jobID), JobCoordinator.JobStatus.COMPLETED);
-                                lock.notifyAll();
-                            }
                             return;
-
-                        } else if (action.equalsIgnoreCase("showcase_stores") || action.equalsIgnoreCase("search_food_preference") ||
-                                action.equalsIgnoreCase("search_ratings") || action.equalsIgnoreCase("search_price_range") ||
-                                action.equalsIgnoreCase("purchase_product") || action.equalsIgnoreCase("rate_store")) {
-
-                            if (action.equalsIgnoreCase("purchase_product")) {
-
-                                opt = (String) obj;
-                                String[] parts;
-                                String storeName;
-
-                                parts = opt.split("_", 5);
-
-                                storeName = parts[2];
-                                int workerId = HashStore.getWorkerID(storeName, numOfWorkers);
-                                int workerPort = 5001 + workerId;
-
-                                new Thread(new ActionsForMaster(IP_ADDRESS, workerPort, wrapper, workerId)).start();
-
-                            } else if (action.equalsIgnoreCase("rate_store")) {
-
-                                opt = (String) obj;
-                                String[] parts;
-                                String storeName;
-
-                                parts = opt.split("_", 5);
-
-                                storeName = parts[2];
-                                int workerId = HashStore.getWorkerID(storeName, numOfWorkers);
-                                int workerPort = 5001 + workerId;
-
-                                new Thread(new ActionsForMaster(IP_ADDRESS, workerPort, wrapper, workerId)).start();
-
-                            } else if (action.equalsIgnoreCase("showcase_stores") || action.equalsIgnoreCase("search_food_preference") ||
-                                    action.equalsIgnoreCase("search_ratings") || action.equalsIgnoreCase("search_price_range")) {
-
-                                for (int i = 1; i <= numOfWorkers; i++) {
-                                    ActionWrapper clonedWrapper = new ActionWrapper(obj, action, jobID);
-                                    new Thread(new ActionsForMaster(IP_ADDRESS, 5001 + i, clonedWrapper, i)).start();
-                                }
-
-                            }
-                            Object clientResults;
-                            JobTracker tracker;
-                            synchronized (jobTrackersLock) {
-                                tracker = jobTrackers.get(jobID);
-                                if (tracker == null) {
-                                    tracker = new JobTracker();
-                                    jobTrackers.put(jobID, tracker);
-                                }
-                            }
-
-                            synchronized (tracker.monitor) {
-                                while (tracker.result == null) {
-                                    try {
-                                        System.out.println("[WAIT] Waiting on jobID: " + jobID);
-                                        tracker.monitor.wait();
-                                    } catch (InterruptedException e) {
-                                        Thread.currentThread().interrupt();
-                                        System.err.println("Interrupted while waiting on jobID: " + jobID);
-                                        return;
-                                    }
-                                }
-
-                                clientResults = tracker.result;
-                                synchronized (jobTrackersLock) {
-                                    jobTrackers.remove(jobID);
-                                }
-                            }
-
-
-                            System.out.println("Printing " + clientResults);
-
-                            if (clientResults instanceof List<?>) {
-                                ActionWrapper responseToClient = new ActionWrapper(ServerDataLoader.populateStoreLogosForClient((List<Store>) clientResults), "final_results", jobID);
-                                out.writeObject(responseToClient);
-                                out.flush();
-                            } else if (clientResults instanceof String) {
-                                ActionWrapper responseToClient = new ActionWrapper(clientResults, "confirmation_message", jobID);
-                                out.writeObject(responseToClient);
-                                out.flush();
-                            }
-                            synchronized (lock) {
-                                JobCoordinator.setStatus(UUID.fromString(jobID), JobCoordinator.JobStatus.COMPLETED);
-                                lock.notifyAll();
-                            }
-                            return;
-
-
-                        } else if (action.equalsIgnoreCase("total_sales_store") || action.equalsIgnoreCase("total_sales_product")) {
-
-                            for (int i = 1; i <= numOfWorkers; i++) {
-                                ActionWrapper clonedWrapper = new ActionWrapper(obj, action, jobID);
-                                new Thread(new ActionsForMaster(IP_ADDRESS, 5001 + i, clonedWrapper, i)).start();
-                            }
-
-                        } else if (action.equalsIgnoreCase("confirmation_from_worker")) {
-                            System.out.println("[MASTER] Master received 'confirmation_from_worker' for JobID: " + jobID + " from Reducer (port " + socket.getPort() + ").");
-                            String confirmationMessageFromWorker = (String) wrapper.getObject();
-                            System.out.println("[MASTER] Confirmation message content from Reducer: '" + confirmationMessageFromWorker + "'");
-
-                            JobTracker targetTracker;
-                            synchronized (jobTrackersLock) {
-                                targetTracker = jobTrackers.get(jobID);
-                                if (targetTracker == null) {
-                                    System.err.println("[MASTER_CH_ERROR] JobTracker for JobID " + jobID + " NOT FOUND .");
-
-                                    return;
-                                }
-                            }
-                            synchronized (targetTracker.monitor) {
-
-                                targetTracker.result = wrapper.getObject();
-                                targetTracker.monitor.notifyAll();
-                            }
-
-
-                            synchronized (lock) {
-                                JobCoordinator.setStatus(UUID.fromString(jobID), JobCoordinator.JobStatus.COMPLETED);
-                                lock.notifyAll();
-                            }
-                            return;
-                        } else if (action.equalsIgnoreCase("manager_confirmation")) {
-
-                            System.out.println("[MASTER] Master received 'manager_confirmation' for JobID: " + jobID + " from Worker/Confirmation Sender.");
-                            String confirmationMessageFromWorker = (String) wrapper.getObject();
-                            System.out.println("[MASTER] Confirmation message content: '" + confirmationMessageFromWorker + "'");
-
-                            JobTracker targetTracker;
-                            synchronized (jobTrackersLock) {
-                                targetTracker = jobTrackers.get(jobID);
-                                if (targetTracker == null) {
-                                    System.err.println("[MASTER_CH_ERROR] JobTracker for JobID " + jobID + " NOT FOUND for manager confirmation.");
-                                    return;
-                                }
-                            }
-                            synchronized (targetTracker.monitor) {
-                                targetTracker.result = confirmationMessageFromWorker;
-                                targetTracker.monitor.notifyAll();
-                            }
-                            synchronized (lock) {
-                                JobCoordinator.setStatus(UUID.fromString(jobID), JobCoordinator.JobStatus.COMPLETED);
-                                lock.notifyAll();
-                            }
-                            return;
-                        }
-
-                        break;
-
-                    case 5001:
-
-                        System.out.println(socket.getPort());
-
-                        if (action.startsWith("mapped_store_results") || action.equalsIgnoreCase("confirmation_from_worker")) {
-
-                            List<AbstractMap.SimpleEntry<String, Store>> resultList = null;
-                            String confirmFromWorker = null;
-
-                            if (obj instanceof List<?>) {
-                                resultList = (List<AbstractMap.SimpleEntry<String, Store>>) obj;
-                            } else if (obj instanceof String) {
-                                confirmFromWorker = (String) obj;
-                            }
-
-                            if (resultList != null) {
-                                addMappedResults(resultList, wrapper.getJobID(), action);
-                            } else if (confirmFromWorker != null) {
-                                new Thread(new ActionsForReducer(IP_ADDRESS, 5000, "confirmation_from_worker", confirmFromWorker, wrapper.getJobID())).start();
-                            }
-
-                            break;
 
                         }
 
-                        break;
-
-                    default:
-
-                        System.out.println(socket.getPort());
+                    } else if (action.equalsIgnoreCase("json") || action.equalsIgnoreCase("add_available_product") ||
+                               action.equalsIgnoreCase("remove_available_product") || action.equalsIgnoreCase("add_new_product") ||
+                               action.equalsIgnoreCase("remove_old_product")) {
 
                         if (action.equalsIgnoreCase("json")) {
 
@@ -538,140 +239,450 @@ public class ClientHandler implements Runnable {
                             if (store != null) {
 
                                 int workerId = HashStore.getWorkerID(store.getStoreName(), numOfWorkers);
+                                int workerPort = 5001 + workerId;
 
-                                new Thread(new ActionsForWorkers(IP_ADDRESS, 5001, wrapper, hashMap, workerId)).start();
+                                new Thread(new ActionsForMaster(IP_ADDRESS, workerPort, wrapper, workerId)).start();
 
                             } else {
-                                System.out.println("[Handler] Message received: " + input);
+
+                                System.out.println("[Handler]->[Master] Message received: " + input);
+
                             }
 
                         } else if (action.equalsIgnoreCase("add_available_product")) {
 
                             opt = (String) obj;
-                            String[] parts = opt.split("_", 3);
-                            String storeName = parts[0];
+                            String[] parts;
+                            String storeName;
 
+                            parts = opt.split("_", 3);
+
+                            storeName = parts[0];
                             int workerId = HashStore.getWorkerID(storeName, numOfWorkers);
+                            int workerPort = 5001 + workerId;
 
-                            new Thread(new ActionsForWorkers(IP_ADDRESS, 5001, wrapper, hashMap, workerId)).start();
+                            new Thread(new ActionsForMaster(IP_ADDRESS, workerPort, wrapper, workerId)).start();
 
                         } else if (action.equalsIgnoreCase("remove_available_product")) {
 
                             opt = (String) obj;
-                            String[] parts = opt.split("_", 2);
-                            String storeName = parts[0];
+                            String[] parts;
+                            String storeName;
 
+                            parts = opt.split("_", 2);
+
+                            storeName = parts[0];
                             int workerId = HashStore.getWorkerID(storeName, numOfWorkers);
+                            int workerPort = 5001 + workerId;
 
-                            new Thread(new ActionsForWorkers(IP_ADDRESS, 5001, wrapper, hashMap, workerId)).start();
+                            new Thread(new ActionsForMaster(IP_ADDRESS, workerPort, wrapper, workerId)).start();
 
                         } else if (action.equalsIgnoreCase("add_new_product")) {
 
                             opt = (String) obj;
-                            String[] parts = opt.split("_", 5);
-                            String storeName = parts[0];
+                            String[] parts;
+                            String storeName;
 
+                            parts = opt.split("_", 5);
+
+                            storeName = parts[0];
                             int workerId = HashStore.getWorkerID(storeName, numOfWorkers);
+                            int workerPort = 5001 + workerId;
 
-                            new Thread(new ActionsForWorkers(IP_ADDRESS, 5001, wrapper, hashMap, workerId)).start();
+                            new Thread(new ActionsForMaster(IP_ADDRESS, workerPort, wrapper, workerId)).start();
 
                         } else if (action.equalsIgnoreCase("remove_old_product")) {
 
                             opt = (String) obj;
-                            String[] parts = opt.split("_", 2);
-                            String storeName = parts[0];
+                            String[] parts;
+                            String storeName;
 
+                            parts = opt.split("_", 2);
+
+                            storeName = parts[0];
                             int workerId = HashStore.getWorkerID(storeName, numOfWorkers);
+                            int workerPort = 5001 + workerId;
 
-                            new Thread(new ActionsForWorkers(IP_ADDRESS, 5001, wrapper, hashMap, workerId)).start();
+                            new Thread(new ActionsForMaster(IP_ADDRESS, workerPort, wrapper, workerId)).start();
+                        }
 
-                        } else if (action.equalsIgnoreCase("showcase_stores")) {
+                        Object clientResults;
+                        JobTracker tracker;
+
+                        synchronized (jobTrackersLock) {
+                            tracker = jobTrackers.get(jobID);
+                            if (tracker == null) {
+                                tracker = new JobTracker();
+                                jobTrackers.put(jobID, tracker);
+                            }
+                        }
+
+                        synchronized (tracker.monitor) {
+                            while (tracker.result == null) {
+                                try {
+                                    System.out.println("[WAIT] Waiting on jobID: " + jobID);
+                                    tracker.monitor.wait();
+                                } catch (InterruptedException e) {
+                                    Thread.currentThread().interrupt();
+                                    System.err.println("Interrupted while waiting on jobID: " + jobID);
+                                    return;
+                                }
+                            }
+
+                            clientResults = tracker.result;
+                            synchronized (jobTrackersLock) {
+                                jobTrackers.remove(jobID);
+                            }
+
+                        }
+
+                        System.out.println("Printing " + clientResults);
+
+                        if (clientResults instanceof List<?>) {
+
+                            ActionWrapper responseToClient = new ActionWrapper(ServerDataLoader.populateStoreLogosForClient((List<Store>) clientResults), "final_results", jobID);
+                            out.writeObject(responseToClient);
+                            out.flush();
+
+                        } else if (clientResults instanceof String) {
+
+                            ActionWrapper responseToClient = new ActionWrapper(clientResults, "confirmation_message", jobID);
+                            out.writeObject(responseToClient);
+                            out.flush();
+
+                        }
+
+                        synchronized (lock) {
+                            JobCoordinator.setStatus(UUID.fromString(jobID), JobCoordinator.JobStatus.COMPLETED);
+                            lock.notifyAll();
+                        }
+
+                        return;
+
+                    } else if (action.equalsIgnoreCase("showcase_stores") || action.equalsIgnoreCase("search_food_preference") ||
+                               action.equalsIgnoreCase("search_ratings") || action.equalsIgnoreCase("search_price_range") ||
+                               action.equalsIgnoreCase("purchase_product") || action.equalsIgnoreCase("rate_store")) {
+
+                        if (action.equalsIgnoreCase("purchase_product")) {
 
                             opt = (String) obj;
-                            String[] parts = opt.split("_", 3);
+                            String[] parts;
+                            String storeName;
 
-                            int workerId = Integer.parseInt(parts[2]);
+                            parts = opt.split("_", 5);
 
-                            new Thread(new ActionsForWorkers(IP_ADDRESS, 5001, wrapper, hashMap, workerId)).start();
+                            storeName = parts[2];
+                            int workerId = HashStore.getWorkerID(storeName, numOfWorkers);
+                            int workerPort = 5001 + workerId;
 
-                        } else if (action.equalsIgnoreCase("search_food_preference")) {
-
-                            opt = (String) obj;
-                            String[] parts = opt.split("_", 4);
-
-                            int workerId = Integer.parseInt(parts[3]);
-
-                            new Thread(new ActionsForWorkers(IP_ADDRESS, 5001, wrapper, hashMap, workerId)).start();
-
-                        } else if (action.equalsIgnoreCase("search_ratings")) {
-
-                            opt = (String) obj;
-                            String[] parts = opt.split("_", 4);
-
-                            int workerId = Integer.parseInt(parts[3]);
-
-                            new Thread(new ActionsForWorkers(IP_ADDRESS, 5001, wrapper, hashMap, workerId)).start();
-
-                        } else if (action.equalsIgnoreCase("search_price_range")) {
-
-                            opt = (String) obj;
-                            String[] parts = opt.split("_", 4);
-
-                            int workerId = Integer.parseInt(parts[3]);
-
-                            new Thread(new ActionsForWorkers(IP_ADDRESS, 5001, wrapper, hashMap, workerId)).start();
-
-                        } else if (action.equalsIgnoreCase("purchase_product")) {
-
-                            opt = (String) obj;
-                            String[] parts = opt.split("_", 5);
-
-                            int workerId = Integer.parseInt(parts[4]);
-
-                            new Thread(new ActionsForWorkers(IP_ADDRESS, 5001, wrapper, hashMap, workerId)).start();
+                            new Thread(new ActionsForMaster(IP_ADDRESS, workerPort, wrapper, workerId)).start();
 
                         } else if (action.equalsIgnoreCase("rate_store")) {
 
                             opt = (String) obj;
-                            String[] parts = opt.split("_", 5);
+                            String[] parts;
+                            String storeName;
 
-                            int workerId = Integer.parseInt(parts[4]);
+                            parts = opt.split("_", 5);
 
-                            new Thread(new ActionsForWorkers(IP_ADDRESS, 5001, wrapper, hashMap, workerId)).start();
+                            storeName = parts[2];
+                            int workerId = HashStore.getWorkerID(storeName, numOfWorkers);
+                            int workerPort = 5001 + workerId;
 
-                        } else if (action.equalsIgnoreCase("total_sales_store") || action.equalsIgnoreCase("total_sales_product")) {
+                            new Thread(new ActionsForMaster(IP_ADDRESS, workerPort, wrapper, workerId)).start();
 
-                            opt = (String) obj;
-                            String[] parts = opt.split("_", 2);
+                        } else if (action.equalsIgnoreCase("showcase_stores") || action.equalsIgnoreCase("search_food_preference") ||
+                                   action.equalsIgnoreCase("search_ratings") || action.equalsIgnoreCase("search_price_range")) {
 
-                            int workerId = Integer.parseInt(parts[1]);
-
-                            new Thread(new ActionsForWorkers(IP_ADDRESS, 5001, wrapper, hashMap, workerId)).start();
+                            for (int i = 1; i <= numOfWorkers; i++) {
+                                ActionWrapper clonedWrapper = new ActionWrapper(obj, action, jobID);
+                                new Thread(new ActionsForMaster(IP_ADDRESS, 5001 + i, clonedWrapper, i)).start();
+                            }
 
                         }
 
+                        Object clientResults;
+                        JobTracker tracker;
+
+                        synchronized (jobTrackersLock) {
+                            tracker = jobTrackers.get(jobID);
+                            if (tracker == null) {
+                                tracker = new JobTracker();
+                                jobTrackers.put(jobID, tracker);
+                            }
+                        }
+
+                        synchronized (tracker.monitor) {
+                            while (tracker.result == null) {
+                                try {
+                                    System.out.println("[WAIT] Waiting on jobID: " + jobID);
+                                    tracker.monitor.wait();
+                                } catch (InterruptedException e) {
+                                    Thread.currentThread().interrupt();
+                                    System.err.println("Interrupted while waiting on jobID: " + jobID);
+                                    return;
+                                }
+                            }
+                            clientResults = tracker.result;
+                            synchronized (jobTrackersLock) {
+                                jobTrackers.remove(jobID);
+                            }
+                        }
+
+                        System.out.println("Printing " + clientResults);
+
+                        if (clientResults instanceof List<?>) {
+
+                            ActionWrapper responseToClient = new ActionWrapper(ServerDataLoader.populateStoreLogosForClient((List<Store>) clientResults), "final_results", jobID);
+                            out.writeObject(responseToClient);
+                            out.flush();
+
+                        } else if (clientResults instanceof String) {
+
+                            ActionWrapper responseToClient = new ActionWrapper(clientResults, "confirmation_message", jobID);
+                            out.writeObject(responseToClient);
+                            out.flush();
+
+                        }
+
+                        synchronized (lock) {
+                            JobCoordinator.setStatus(UUID.fromString(jobID), JobCoordinator.JobStatus.COMPLETED);
+                            lock.notifyAll();
+                        }
+
+                        return;
+
+                    } else if (action.equalsIgnoreCase("total_sales_store") || action.equalsIgnoreCase("total_sales_product")) {
+
+                        for (int i = 1; i <= numOfWorkers; i++) {
+                            ActionWrapper clonedWrapper = new ActionWrapper(obj, action, jobID);
+                            new Thread(new ActionsForMaster(IP_ADDRESS, 5001 + i, clonedWrapper, i)).start();
+                        }
+
+                    } else if (action.equalsIgnoreCase("confirmation_from_worker")) {
+
+                        System.out.println("[MASTER] Master received 'confirmation_from_worker' for JobID: " + jobID + " from Reducer (port " + socket.getPort() + ").");
+                        String confirmationMessageFromWorker = (String) wrapper.getObject();
+                        System.out.println("[MASTER] Confirmation message content from Reducer: '" + confirmationMessageFromWorker + "'");
+
+                        JobTracker targetTracker;
+                        synchronized (jobTrackersLock) {
+                            targetTracker = jobTrackers.get(jobID);
+                            if (targetTracker == null) {
+                                System.err.println("[MASTER_CH_ERROR] JobTracker for JobID " + jobID + " NOT FOUND .");
+
+                                return;
+                            }
+                        }
+
+                        synchronized (targetTracker.monitor) {
+                            targetTracker.result = wrapper.getObject();
+                            targetTracker.monitor.notifyAll();
+                        }
+
+                        synchronized (lock) {
+                            JobCoordinator.setStatus(UUID.fromString(jobID), JobCoordinator.JobStatus.COMPLETED);
+                            lock.notifyAll();
+                        }
+
+                        return;
+
+                    } else if (action.equalsIgnoreCase("manager_confirmation")) {
+
+                        System.out.println("[MASTER] Master received 'manager_confirmation' for JobID: " + jobID + " from Worker/Confirmation Sender.");
+                        String confirmationMessageFromWorker = (String) wrapper.getObject();
+                        System.out.println("[MASTER] Confirmation message content: '" + confirmationMessageFromWorker + "'");
+
+                        JobTracker targetTracker;
+                        synchronized (jobTrackersLock) {
+                            targetTracker = jobTrackers.get(jobID);
+                            if (targetTracker == null) {
+                                System.err.println("[MASTER_CH_ERROR] JobTracker for JobID " + jobID + " NOT FOUND for manager confirmation.");
+                                return;
+                            }
+                        }
+
+                        synchronized (targetTracker.monitor) {
+                            targetTracker.result = confirmationMessageFromWorker;
+                            targetTracker.monitor.notifyAll();
+                        }
+
+                        synchronized (lock) {
+                            JobCoordinator.setStatus(UUID.fromString(jobID), JobCoordinator.JobStatus.COMPLETED);
+                            lock.notifyAll();
+                        }
+
+                        return;
+                    }
+
+                    break;
+
+                case 5001:
+
+                    System.out.println(socket.getPort());
+
+                    if (action.startsWith("mapped_store_results") || action.equalsIgnoreCase("confirmation_from_worker")) {
+
+                        List<AbstractMap.SimpleEntry<String, Store>> resultList = null;
+                        String confirmFromWorker = null;
+
+                        if (obj instanceof List<?>) {
+                            resultList = (List<AbstractMap.SimpleEntry<String, Store>>) obj;
+                        } else if (obj instanceof String) {
+                            confirmFromWorker = (String) obj;
+                        }
+
+                        if (resultList != null) {
+                            addMappedResults(resultList, wrapper.getJobID(), action);
+                        } else if (confirmFromWorker != null) {
+                            new Thread(new ActionsForReducer(IP_ADDRESS, 5000, "confirmation_from_worker", confirmFromWorker, wrapper.getJobID())).start();
+                        }
+
                         break;
-                }
 
+                    }
 
-            } catch (ClassNotFoundException e) {
-                System.err.println("[ClientHandler] ClassNotFoundException: " + e.getMessage());
-            } catch (IOException e) {
-                System.err.println("[ClientHandler] IOException (connection closed or error): " + e.getMessage());
-                // This is where a client disconnecting or a network error will be caught.
-            } finally {
-                // Ensure streams and socket are closed when the thread exits
-                // This is important because the ClientHandler processes only one request then terminates
-                try {
-                    if (in != null) in.close();
-                    if (out != null) out.close();
-                    if (socket != null && !socket.isClosed()) socket.close();
-                } catch (IOException closeEx) {
-                    System.err.println("Error closing resources in ClientHandler: " + closeEx.getMessage());
-                }
-                }
+                    break;
 
+                default:
 
+                    System.out.println(socket.getPort());
+
+                    if (action.equalsIgnoreCase("json")) {
+
+                        Store store = (Store) obj;
+
+                        if (store != null) {
+
+                            int workerId = HashStore.getWorkerID(store.getStoreName(), numOfWorkers);
+
+                            new Thread(new ActionsForWorkers(IP_ADDRESS, 5001, wrapper, hashMap, workerId)).start();
+
+                        } else {
+                            System.out.println("[Handler] Message received: " + input);
+                        }
+
+                    } else if (action.equalsIgnoreCase("add_available_product")) {
+
+                        opt = (String) obj;
+                        String[] parts = opt.split("_", 3);
+                        String storeName = parts[0];
+
+                        int workerId = HashStore.getWorkerID(storeName, numOfWorkers);
+
+                        new Thread(new ActionsForWorkers(IP_ADDRESS, 5001, wrapper, hashMap, workerId)).start();
+
+                    } else if (action.equalsIgnoreCase("remove_available_product")) {
+
+                        opt = (String) obj;
+                        String[] parts = opt.split("_", 2);
+                        String storeName = parts[0];
+
+                        int workerId = HashStore.getWorkerID(storeName, numOfWorkers);
+
+                        new Thread(new ActionsForWorkers(IP_ADDRESS, 5001, wrapper, hashMap, workerId)).start();
+
+                    } else if (action.equalsIgnoreCase("add_new_product")) {
+
+                        opt = (String) obj;
+                        String[] parts = opt.split("_", 5);
+                        String storeName = parts[0];
+
+                        int workerId = HashStore.getWorkerID(storeName, numOfWorkers);
+
+                        new Thread(new ActionsForWorkers(IP_ADDRESS, 5001, wrapper, hashMap, workerId)).start();
+
+                    } else if (action.equalsIgnoreCase("remove_old_product")) {
+
+                        opt = (String) obj;
+                        String[] parts = opt.split("_", 2);
+                        String storeName = parts[0];
+
+                        int workerId = HashStore.getWorkerID(storeName, numOfWorkers);
+
+                        new Thread(new ActionsForWorkers(IP_ADDRESS, 5001, wrapper, hashMap, workerId)).start();
+
+                    } else if (action.equalsIgnoreCase("showcase_stores")) {
+
+                        opt = (String) obj;
+                        String[] parts = opt.split("_", 3);
+
+                        int workerId = Integer.parseInt(parts[2]);
+
+                        new Thread(new ActionsForWorkers(IP_ADDRESS, 5001, wrapper, hashMap, workerId)).start();
+
+                    } else if (action.equalsIgnoreCase("search_food_preference")) {
+
+                        opt = (String) obj;
+                        String[] parts = opt.split("_", 4);
+
+                        int workerId = Integer.parseInt(parts[3]);
+
+                        new Thread(new ActionsForWorkers(IP_ADDRESS, 5001, wrapper, hashMap, workerId)).start();
+
+                    } else if (action.equalsIgnoreCase("search_ratings")) {
+
+                        opt = (String) obj;
+                        String[] parts = opt.split("_", 4);
+
+                        int workerId = Integer.parseInt(parts[3]);
+
+                        new Thread(new ActionsForWorkers(IP_ADDRESS, 5001, wrapper, hashMap, workerId)).start();
+
+                    } else if (action.equalsIgnoreCase("search_price_range")) {
+
+                        opt = (String) obj;
+                        String[] parts = opt.split("_", 4);
+
+                        int workerId = Integer.parseInt(parts[3]);
+
+                        new Thread(new ActionsForWorkers(IP_ADDRESS, 5001, wrapper, hashMap, workerId)).start();
+
+                    } else if (action.equalsIgnoreCase("purchase_product")) {
+
+                        opt = (String) obj;
+                        String[] parts = opt.split("_", 5);
+
+                        int workerId = Integer.parseInt(parts[4]);
+
+                        new Thread(new ActionsForWorkers(IP_ADDRESS, 5001, wrapper, hashMap, workerId)).start();
+
+                    } else if (action.equalsIgnoreCase("rate_store")) {
+
+                        opt = (String) obj;
+                        String[] parts = opt.split("_", 5);
+
+                        int workerId = Integer.parseInt(parts[4]);
+
+                        new Thread(new ActionsForWorkers(IP_ADDRESS, 5001, wrapper, hashMap, workerId)).start();
+
+                    } else if (action.equalsIgnoreCase("total_sales_store") || action.equalsIgnoreCase("total_sales_product")) {
+
+                        opt = (String) obj;
+                        String[] parts = opt.split("_", 2);
+
+                        int workerId = Integer.parseInt(parts[1]);
+
+                        new Thread(new ActionsForWorkers(IP_ADDRESS, 5001, wrapper, hashMap, workerId)).start();
+
+                    }
+
+                    break;
+            }
+
+        } catch (ClassNotFoundException e) {
+            System.err.println("[ClientHandler] ClassNotFoundException: " + e.getMessage());
+        } catch (IOException e) {
+            System.err.println("[ClientHandler] IOException (connection closed or error): " + e.getMessage());
+        } finally {
+            try {
+                if (in != null) in.close();
+                if (out != null) out.close();
+                if (socket != null && !socket.isClosed()) socket.close();
+            } catch (IOException closeEx) {
+                System.err.println("Error closing resources in ClientHandler: " + closeEx.getMessage());
+            }
+        }
 
     }
 

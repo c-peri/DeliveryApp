@@ -24,7 +24,6 @@ public class Client implements Runnable {
     private ObjectOutputStream out;
     private ObjectInputStream in;
 
-
     private final Object lock = new Object();
 
     public Client(String host, int port, String message, String role) {
@@ -34,7 +33,6 @@ public class Client implements Runnable {
         this.role = role;
         this.action = parts.length > 1 ? parts[1] : "";
     }
-
 
     public void run() {
 
@@ -165,10 +163,8 @@ public class Client implements Runnable {
 
                                 break;
 
-                            } catch (IOException ex) {
+                            } catch (IOException | ClassNotFoundException ex) {
                                 throw new RuntimeException(ex);
-                            } catch (ClassNotFoundException e) {
-                                throw new RuntimeException(e);
                             }
 
                         } else if (this.action.equalsIgnoreCase("add_new_product")) {
@@ -213,10 +209,8 @@ public class Client implements Runnable {
 
                                 break;
 
-                            } catch (IOException ex) {
+                            } catch (IOException | ClassNotFoundException ex) {
                                 throw new RuntimeException(ex);
-                            } catch (ClassNotFoundException e) {
-                                throw new RuntimeException(e);
                             }
 
                         } else if (this.action.equalsIgnoreCase("remove_old_product")) {
@@ -242,10 +236,8 @@ public class Client implements Runnable {
 
                                 break;
 
-                            } catch (IOException ex) {
+                            } catch (IOException | ClassNotFoundException ex) {
                                 throw new RuntimeException(ex);
-                            } catch (ClassNotFoundException e) {
-                                throw new RuntimeException(e);
                             }
 
                         } else if (this.action.equalsIgnoreCase("total_sales_store")) {
@@ -268,10 +260,8 @@ public class Client implements Runnable {
 
                                 break;
 
-                            } catch (IOException ex) {
+                            } catch (IOException | ClassNotFoundException ex) {
                                 throw new RuntimeException(ex);
-                            } catch (ClassNotFoundException e) {
-                                throw new RuntimeException(e);
                             }
 
                         } else if (this.action.equalsIgnoreCase("total_sales_product")) {
@@ -607,11 +597,10 @@ public class Client implements Runnable {
                                 System.out.print("> ");
                                 try {
                                     longitude = Double.parseDouble(in.next());
-                                    in.nextLine(); // consume newline
+                                    in.nextLine();
                                     break;
                                 } catch (NumberFormatException ignore) {
                                     System.out.println("Invalid input. Please enter a valid number.");
-                                    // clientScanner.nextLine(); // Already consumed by next()
                                 }
                             }
 
@@ -621,11 +610,10 @@ public class Client implements Runnable {
                                 System.out.print("> ");
                                 try {
                                     latitude = Double.parseDouble(in.next());
-                                    in.nextLine(); // consume newline
+                                    in.nextLine();
                                     break;
                                 } catch (NumberFormatException ignore) {
                                     System.out.println("Invalid input. Please enter a valid number.");
-                                    // clientScanner.nextLine(); // Already consumed by next()
                                 }
                             }
 
@@ -642,7 +630,7 @@ public class Client implements Runnable {
                                 System.out.print("> ");
                                 try {
                                     stars = Integer.parseInt(in.next());
-                                    in.nextLine(); // consume newline
+                                    in.nextLine();
                                     if (stars > 0 && stars <= 5) {
                                         break;
                                     } else {
@@ -650,7 +638,6 @@ public class Client implements Runnable {
                                     }
                                 } catch (NumberFormatException ignore) {
                                     System.out.println("Invalid input. Please enter a number.");
-                                    // clientScanner.nextLine(); // Already consumed by next()
                                 }
                             }
 
@@ -666,15 +653,15 @@ public class Client implements Runnable {
                                 out.writeObject(requestWrapper);
                                 out.flush();
 
-
                                 printSearchResults(clientSocket);
                                 break;
 
                             } catch (IOException ex) {
                                 System.err.println("[CLIENT_ERROR] IOException during 'rate_store' client request/response: " + ex.getMessage());
                                 ex.printStackTrace();
-                                throw new RuntimeException(ex); // Re-throw to propagate error
+                                throw new RuntimeException(ex);
                             }
+
                         }
 
                     }
@@ -682,7 +669,6 @@ public class Client implements Runnable {
                 } catch (RuntimeException | ClassNotFoundException e) {
                     throw new RuntimeException(e);
                 }
-
 
                 break;
 
@@ -696,9 +682,10 @@ public class Client implements Runnable {
 
     private static void printSearchResults(Socket clientSocket) throws IOException, ClassNotFoundException {
 
-        ObjectInputStream currentInStream = null;
+        ObjectInputStream currentInStream;
 
         try {
+
             currentInStream = new ObjectInputStream(clientSocket.getInputStream());
 
             Object obj = currentInStream.readObject();
@@ -707,36 +694,57 @@ public class Client implements Runnable {
             String resAction = wrapper.getAction();
             Object resObj = wrapper.getObject();
 
-
             if (resAction.equalsIgnoreCase("final_results")) {
+
                 List<Store> finalResults = (List<Store>) resObj;
 
                 if (finalResults.isEmpty()) {
+
                     System.out.println("[CLIENT] No stores found matching your criteria.");
+
                 } else {
+
                     System.out.println("[CLIENT] Found " + finalResults.size() + " stores:");
+
                     for (Store store : finalResults) {
                         System.out.println(">> " + store.getStoreName() + " (Avg Rating: " + store.printStarRating() + ", Price Range: " + store.getStorePriceRange() + ")");
                     }
+
                 }
+
             } else if (resAction.equalsIgnoreCase("confirmation_message")) {
+
                 System.out.println("[CLIENT] Confirmation Message: " + resObj);
+
             } else {
+
                 System.out.println("[CLIENT] Unhandled response action: " + resAction);
+
             }
+
         } catch (EOFException e) {
+
             System.err.println("[CLIENT_ERROR] EOFException in printSearchResults: The server might have closed the connection prematurely. " + e.getMessage());
             e.printStackTrace();
+
             throw e;
+
         } catch (IOException e) {
+
             System.err.println("[CLIENT_ERROR] IOException in printSearchResults: " + e.getMessage());
             e.printStackTrace();
+
             throw e;
+
         } catch (ClassNotFoundException e) {
+
             System.err.println("[CLIENT_ERROR] ClassNotFoundException in printSearchResults: " + e.getMessage());
             e.printStackTrace();
+
             throw e;
+
         }
+
     }
 
 }

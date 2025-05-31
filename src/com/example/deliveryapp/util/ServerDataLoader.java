@@ -33,6 +33,7 @@ public class ServerDataLoader {
                 if (imageFile.exists()) {
 
                     try {
+
                         BufferedImage bImage = ImageIO.read(imageFile);
 
                         if (bImage != null) {
@@ -72,6 +73,7 @@ public class ServerDataLoader {
                 store.setStoreLogoBytes(null);
 
             }
+
         }
 
         return stores;

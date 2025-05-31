@@ -11,35 +11,30 @@
       "ProductName": "Margarita",
       "ProductType": "pizza",
       "AvailableAmount": 9,
-      "Price": 8.90,
-      "availability": true
+      "Price": 8.90
     },
     {
       "ProductName": "Special",
       "ProductType": "pizza",
       "AvailableAmount": 0,
-      "Price": 10.90,
-      "availability": false
+      "Price": 10.90
     },
     {
       "ProductName": "Truffle",
       "ProductType": "pizza",
       "AvailableAmount": 9,
-      "Price": 13.90,
-      "availability": true
+      "Price": 13.90
     },
     {
       "ProductName": "Garlic Bread",
       "ProductType": "side",
       "AvailableAmount": 10,
-      "Price": 3.90,
-      "availability": true
+      "Price": 3.90
     },
     {  "ProductName": "Ceasar's",
       "ProductType": "salad",
       "AvailableAmount": 4,
-      "Price": 7.90,
-      "availability": true
+      "Price": 7.90
     }
   ]
 }

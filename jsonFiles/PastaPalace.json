@@ -11,50 +11,43 @@
       "ProductName": "Spaghetti Bolognese",
       "ProductType": "pasta",
       "AvailableAmount": 8,
-      "Price": 7.70,
-      "availability": true
+      "Price": 7.70
     },
     {
       "ProductName": "Lasagna",
       "ProductType": "pasta",
       "AvailableAmount": 5,
-      "Price": 12.20,
-      "availability": true
+      "Price": 12.20
     },
     {
       "ProductName": "Bruschetta",
       "ProductType": "side",
       "AvailableAmount": 10,
-      "Price": 5.00,
-      "availability": true
+      "Price": 5.00
     },
     {
       "ProductName": "Italian Salad",
       "ProductType": "salad",
       "AvailableAmount": 3,
       "Price": 6.80,
-      "availability": true
     },
     {
       "ProductName": "Carbonara",
       "ProductType": "pasta",
       "AvailableAmount": 0,
-      "Price": 12.80,
-      "availability": false
+      "Price": 12.80
     },
     {
       "ProductName": "White Wine",
       "ProductType": "drink",
       "AvailableAmount": 12,
-      "Price": 4.90,
-      "availability": true
+      "Price": 4.90
     },
     {
       "ProductName": "Red Wine",
       "ProductType": "drink",
       "AvailableAmount": 11,
-      "Price": 4.90,
-      "availability": true
+      "Price": 4.90
     }
   ]
 }

@@ -11,50 +11,43 @@
       "ProductName": "Beef Taco",
       "ProductType": "taco",
       "AvailableAmount": 0,
-      "Price": 12.80,
-      "availability": false
+      "Price": 12.80
     },
     {
       "ProductName": "Chicken Taco",
       "ProductType": "taco",
       "AvailableAmount": 5,
-      "Price": 11.80,
-      "availability": true
+      "Price": 11.80
     },
     {
       "ProductName": "Nachos",
       "ProductType": "side",
       "AvailableAmount": 9,
-      "Price": 5.90,
-      "availability": true
+      "Price": 5.90
     },
     {
       "ProductName": "Beef Burrito",
       "ProductType": "burrito",
       "AvailableAmount": 15,
-      "Price": 10.90,
-      "availability": true
+      "Price": 10.90
     },
     {
       "ProductName": "Chicken Burrito",
       "ProductType": "burrito",
       "AvailableAmount": 10,
-      "Price": 9.90,
-      "availability": true
+      "Price": 9.90
     },
     {
       "ProductName": "Shrimp Burrito",
       "ProductType": "burrito",
       "AvailableAmount": 6,
-      "Price": 13.90,
-      "availability": true
+      "Price": 13.90
     },
     {
       "ProductName": "Bean Burrito",
       "ProductType": "burrito",
       "AvailableAmount": 12,
-      "Price": 7.90,
-      "availability": true
+      "Price": 7.90
     }
   ]
 }

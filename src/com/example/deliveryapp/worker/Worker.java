@@ -16,8 +16,7 @@ import java.util.HashMap;
 
 public class Worker {
 
-
-    public static void main(String[] args) throws InterruptedException {
+    public static void main(String[] args) {
 
         if (args.length < 1) {
             System.out.println("<WorkerID>)");

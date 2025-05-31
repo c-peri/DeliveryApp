@@ -39,8 +39,8 @@ public class ActionsForReducer implements Runnable {
         try (Socket socket = new Socket(masterHost, masterPort);
              ObjectOutputStream out = new ObjectOutputStream(socket.getOutputStream())) {
 
-
             if (workerResults instanceof String) {
+
                 ActionWrapper wrapper = new ActionWrapper(workerResults, action, jobID);
                 out.writeObject(wrapper);
                 out.flush();
@@ -56,28 +56,27 @@ public class ActionsForReducer implements Runnable {
                 }
 
             } else {
+
                 ActionWrapper wrapper = new ActionWrapper(workerResults, this.action, jobID);
                 out.writeObject(wrapper);
                 out.flush();
                 System.out.println("[Reducer->Master] Sent result to master");
+
                 Object lock = JobCoordinator.getLock(UUID.fromString(jobID));
                 synchronized (lock) {
                     while (!JobCoordinator.getStatus(UUID.fromString(jobID)).equals("COMPLETED")) {
                         lock.wait(500);
                     }
-
                 }
-            }
 
+            }
 
             System.out.println("Job complete: " + jobID);
 
-
-        } catch (UnknownHostException e) {
-            throw new RuntimeException(e);
         } catch (IOException | InterruptedException e) {
             throw new RuntimeException(e);
         }
 
     }
+
 }

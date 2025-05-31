@@ -6,7 +6,7 @@ package com.example.deliveryapp.util;
  **/
 
 public class IPConfig {
-    public static volatile String IP_ADDRESS = "192.168.56.1";
+    public static volatile String IP_ADDRESS = "192.168.1.90";
 
 }
 

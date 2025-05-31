@@ -11,50 +11,43 @@
       "ProductName": "Classic Burger",
       "ProductType": "burger",
       "AvailableAmount": 20,
-      "Price": 7.95,
-      "availability": true
+      "Price": 7.95
     },
     {
       "ProductName": "Cheeseburger",
       "ProductType": "burger",
       "AvailableAmount": 20,
-      "Price": 7.95,
-      "availability": true
+      "Price": 7.95
     },
     {
       "ProductName": "Veggie Burger",
       "ProductType": "burger",
       "AvailableAmount": 20,
-      "Price": 8.95,
-      "availability": true
+      "Price": 8.95
     },
     {
       "ProductName": "French Fries",
       "ProductType": "side",
       "AvailableAmount": 40,
-      "Price": 3.95,
-      "availability": true
+      "Price": 3.95
     },
     {
       "ProductName": "Soda",
       "ProductType": "drink",
       "AvailableAmount": 100,
-      "Price": 1.95,
-      "availability": true
+      "Price": 1.95
     },
     {
       "ProductName": "onion rings",
       "ProductType": "side",
       "AvailableAmount": 40,
-      "Price": 4.95,
-      "availability": true
+      "Price": 4.95
     },
     {
       "ProductName": "Water",
       "ProductType": "drink",
       "AvailableAmount": 100,
-      "Price": 0.50,
-      "availability": true
+      "Price": 0.50
     }
   ]
 }

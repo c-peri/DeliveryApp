@@ -11,22 +11,19 @@
       "ProductName": "margarita",
       "ProductType": "pizza",
       "AvailableAmount": 0,
-      "Price": 9.2,
-      "availability": false
+      "Price": 9.2
     },
     {
       "ProductName": "special",
       "ProductType": "pizza",
       "AvailableAmount": 0,
-      "Price": 12.0,
-      "availability": false
+      "Price": 12.0
     },
     {
       "ProductName": "chef’s Salad",
       "ProductType": "salad",
       "AvailableAmount": 0,
-      "Price": 5.0,
-      "availability": false
+      "Price": 5.0
     }
   ]
 }

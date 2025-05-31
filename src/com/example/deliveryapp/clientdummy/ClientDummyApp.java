@@ -13,7 +13,7 @@ import static com.example.deliveryapp.util.IPConfig.IP_ADDRESS;
 
 public class ClientDummyApp {
 
-    public static void main(String[] args) throws InterruptedException {
+    public static void main(String[] args) {
 
         Scanner in = new Scanner(System.in);
         String choice;

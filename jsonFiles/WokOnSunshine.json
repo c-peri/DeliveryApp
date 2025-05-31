@@ -11,36 +11,31 @@
       "ProductName": "Chicken Fried Noodles",
       "ProductType": "noodles",
       "AvailableAmount": 1,
-      "Price": 8.00,
-      "availability": true
+      "Price": 8.00
     },
     {
       "ProductName": "Shrimp Fried Noodles",
       "ProductType": "noodles",
       "AvailableAmount": 3,
-      "Price": 9.55,
-      "availability": true
+      "Price": 9.55
     },
     {
       "ProductName": "Teriyaki Fried Rice",
       "ProductType": "rice",
       "AvailableAmount": 3,
-      "Price": 8.50,
-      "availability": true
+      "Price": 8.50
     },
     {
       "ProductName": "Wakame Salad",
       "ProductType": "salad",
       "AvailableAmount": 4,
-      "Price": 5.50,
-      "availability": true
+      "Price": 5.50
     },
     {
       "ProductName": "Edamame Beans",
       "ProductType": "side",
       "AvailableAmount": 10,
-      "Price": 5.50,
-      "availability": true
+      "Price": 5.50
     }
   ]
 }

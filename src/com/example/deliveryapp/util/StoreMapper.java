@@ -50,7 +50,7 @@ public class StoreMapper {
 
         List<AbstractMap.SimpleEntry<String, Store>> result = new ArrayList<>();
 
-        boolean pass = true;
+        boolean pass;
 
         for (Store store : stores) {
 
