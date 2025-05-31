@@ -82,6 +82,10 @@ public class Store implements Serializable {
         return Stars;
     }
 
+    public double printStarRating() {
+        return Math.round(Stars * 10.0) / 10.0;
+    }
+
     public void setStars(double Stars) {
         this.Stars = Stars;
     }

@@ -29,16 +29,23 @@ public class ClientHandler implements Runnable {
 
     private static class JobTracker {
         final Object monitor = new Object();
-        List<Store> result = null;
+        Object result = null;
     }
 
 
     public ClientHandler(Socket socket) {
         this.socket = socket;
+        try {
+            in = new ObjectInputStream(socket.getInputStream());
+            out = new ObjectOutputStream(socket.getOutputStream());
+        } catch (IOException e) {
+            System.err.println("Error initializing streams for ClientHandler (socket " + socket.getLocalPort() + "): " + e.getMessage());
+            try { socket.close(); } catch (IOException closeEx) { /* ignore */ }
+        }
     }
 
     public ClientHandler(Socket socket, HashMap<String, Store> hashMap) {
-        this.socket = socket;
+        this(socket);
         this.hashMap = hashMap;
     }
 
@@ -109,11 +116,11 @@ public class ClientHandler implements Runnable {
 
                 Thread thread = new Thread(new ActionsForReducer("localhost", 5000, action, reducedList, jobID));
                 thread.start();
-                try {
-                    thread.join();
-                } catch (InterruptedException e) {
-                    throw new RuntimeException(e);
-                }
+//                try {
+//                    thread.join();
+//                } catch (InterruptedException e) {
+//                    throw new RuntimeException(e);
+//                }
 
 
             }
@@ -124,15 +131,14 @@ public class ClientHandler implements Runnable {
 
     public void run() {
 
-        ObjectOutputStream out = null;
-        ObjectInputStream in = null;
-        String jobID, opt, input = "";
+        String jobID;
+        String opt;
+        String input = "";
 
-        while (true) {
+
+
 
             try {
-                out = new ObjectOutputStream(socket.getOutputStream());
-                in = new ObjectInputStream(socket.getInputStream());
 
                 Object received = in.readObject();
 
@@ -140,8 +146,9 @@ public class ClientHandler implements Runnable {
                 Object obj = wrapper.getObject();
                 String action = wrapper.getAction();
                 jobID = wrapper.getJobID();
-                System.out.println("JobID: " + jobID);
+                Object lock = JobCoordinator.getLock(UUID.fromString(jobID));
 
+                System.out.println("JobID: " + jobID);
 
                 int localPort = socket.getLocalPort();
                 int numOfWorkers = Config.getNumberOfWorkers();
@@ -155,7 +162,8 @@ public class ClientHandler implements Runnable {
                         if (action.startsWith("mapped_store_results")) {
 
                             if (action.equalsIgnoreCase("mapped_store_results")) {
-
+                                System.out.println(wrapper.getObject());
+                                System.out.println(wrapper.getAction());
                                 List<Store> finalResults = (List<Store>) wrapper.getObject();
                                 String receivedJobID = wrapper.getJobID();
 
@@ -163,10 +171,11 @@ public class ClientHandler implements Runnable {
                                 System.out.println(finalResults);
 
                                 addFinalResults(finalResults, receivedJobID);
-//                                System.out.println("Flushing to: " + socket.getRemoteSocketAddress());
-//                                ActionWrapper responseToClient = new ActionWrapper(finalResults, "final_results", receivedJobID);
-//                                out.writeObject(responseToClient);
-//                                out.flush();
+
+                                synchronized (lock) {
+                                    JobCoordinator.setStatus(UUID.fromString(jobID), JobCoordinator.JobStatus.SEARCH_DONE);
+                                    lock.notifyAll();
+                                }
 
                                 return;
 
@@ -295,7 +304,51 @@ public class ClientHandler implements Runnable {
 
                                 new Thread(new ActionsForMaster("localhost", workerPort, wrapper, workerId)).start();
                             }
+                            Object clientResults;
+                            JobTracker tracker;
+                            synchronized (jobTrackersLock) {
+                                tracker = jobTrackers.get(jobID);
+                                if (tracker == null) {
+                                    tracker = new JobTracker();
+                                    jobTrackers.put(jobID, tracker);
+                                }
+                            }
 
+                            synchronized (tracker.monitor) {
+                                while (tracker.result == null) {
+                                    try {
+                                        System.out.println("[WAIT] Waiting on jobID: " + jobID);
+                                        tracker.monitor.wait();
+                                    } catch (InterruptedException e) {
+                                        Thread.currentThread().interrupt();
+                                        System.err.println("Interrupted while waiting on jobID: " + jobID);
+                                        return;
+                                    }
+                                }
+
+                                clientResults = tracker.result;
+                                synchronized (jobTrackersLock) {
+                                    jobTrackers.remove(jobID); // Cleanup
+                                }
+                            }
+
+
+                            System.out.println("Printing " + clientResults);
+
+                            if (clientResults instanceof List<?>) {
+                                ActionWrapper responseToClient = new ActionWrapper(ServerDataLoader.populateStoreLogosForClient((List<Store>) clientResults), "final_results", jobID);
+                                out.writeObject(responseToClient);
+                                out.flush();
+                            } else if (clientResults instanceof String) {
+                                ActionWrapper responseToClient = new ActionWrapper(clientResults, "confirmation_message", jobID);
+                                out.writeObject(responseToClient);
+                                out.flush();
+                            }
+                            synchronized (lock) {
+                                JobCoordinator.setStatus(UUID.fromString(jobID), JobCoordinator.JobStatus.COMPLETED);
+                                lock.notifyAll();
+                            }
+                            return;
 
                         } else if (action.equalsIgnoreCase("showcase_stores") || action.equalsIgnoreCase("search_food_preference") ||
                                 action.equalsIgnoreCase("search_ratings") || action.equalsIgnoreCase("search_price_range") ||
@@ -338,7 +391,7 @@ public class ClientHandler implements Runnable {
                                 }
 
                             }
-                            List<Store> clientResults = Collections.synchronizedList(new ArrayList<>());
+                            Object clientResults;
                             JobTracker tracker;
                             synchronized (jobTrackersLock) {
                                 tracker = jobTrackers.get(jobID);
@@ -362,18 +415,26 @@ public class ClientHandler implements Runnable {
 
                                 clientResults = tracker.result;
                                 synchronized (jobTrackersLock) {
-                                    jobTrackers.remove(jobID); // Cleanup
+                                    jobTrackers.remove(jobID);
                                 }
                             }
 
 
                             System.out.println("Printing " + clientResults);
 
-                            ActionWrapper responseToClient = new ActionWrapper(ServerDataLoader.populateStoreLogosForClient(clientResults), "final_results", jobID);
-                            out.reset();
-                            out.writeObject(responseToClient);
-                            out.flush();
-
+                            if (clientResults instanceof List<?>) {
+                                ActionWrapper responseToClient = new ActionWrapper(ServerDataLoader.populateStoreLogosForClient((List<Store>) clientResults), "final_results", jobID);
+                                out.writeObject(responseToClient);
+                                out.flush();
+                            } else if (clientResults instanceof String) {
+                                ActionWrapper responseToClient = new ActionWrapper(clientResults, "confirmation_message", jobID);
+                                out.writeObject(responseToClient);
+                                out.flush();
+                            }
+                            synchronized (lock) {
+                                JobCoordinator.setStatus(UUID.fromString(jobID), JobCoordinator.JobStatus.COMPLETED);
+                                lock.notifyAll();
+                            }
                             return;
 
 
@@ -384,6 +445,55 @@ public class ClientHandler implements Runnable {
                                 new Thread(new ActionsForMaster("localhost", 5001 + i, clonedWrapper, i)).start();
                             }
 
+                        } else if (action.equalsIgnoreCase("confirmation_from_worker")) {
+                            System.out.println("[MASTER] Master received 'confirmation_from_worker' for JobID: " + jobID + " from Reducer (port " + socket.getPort() + ").");
+                            String confirmationMessageFromWorker = (String) wrapper.getObject();
+                            System.out.println("[MASTER] Confirmation message content from Reducer: '" + confirmationMessageFromWorker + "'");
+
+                            JobTracker targetTracker;
+                            synchronized (jobTrackersLock) {
+                                targetTracker = jobTrackers.get(jobID);
+                                if (targetTracker == null) {
+                                    System.err.println("[MASTER_CH_ERROR] JobTracker for JobID " + jobID + " NOT FOUND .");
+
+                                    return;
+                                }
+                            }
+                            synchronized (targetTracker.monitor) {
+
+                                targetTracker.result = wrapper.getObject();
+                                targetTracker.monitor.notifyAll();
+                            }
+
+
+                            synchronized (lock) {
+                                JobCoordinator.setStatus(UUID.fromString(jobID), JobCoordinator.JobStatus.COMPLETED);
+                                lock.notifyAll();
+                            }
+                            return;
+                        } else if (action.equalsIgnoreCase("manager_confirmation")) {
+
+                            System.out.println("[MASTER] Master received 'manager_confirmation' for JobID: " + jobID + " from Worker/Confirmation Sender.");
+                            String confirmationMessageFromWorker = (String) wrapper.getObject();
+                            System.out.println("[MASTER] Confirmation message content: '" + confirmationMessageFromWorker + "'");
+
+                            JobTracker targetTracker;
+                            synchronized (jobTrackersLock) {
+                                targetTracker = jobTrackers.get(jobID);
+                                if (targetTracker == null) {
+                                    System.err.println("[MASTER_CH_ERROR] JobTracker for JobID " + jobID + " NOT FOUND for manager confirmation.");
+                                    return;
+                                }
+                            }
+                            synchronized (targetTracker.monitor) {
+                                targetTracker.result = confirmationMessageFromWorker;
+                                targetTracker.monitor.notifyAll();
+                            }
+                            synchronized (lock) {
+                                JobCoordinator.setStatus(UUID.fromString(jobID), JobCoordinator.JobStatus.COMPLETED);
+                                lock.notifyAll();
+                            }
+                            return;
                         }
 
                         break;
@@ -406,10 +516,10 @@ public class ClientHandler implements Runnable {
                             if (resultList != null) {
                                 addMappedResults(resultList, wrapper.getJobID(), action);
                             } else if (confirmFromWorker != null) {
-                                new Thread(new ActionsForReducer("localhost", 5000, action, confirmFromWorker, wrapper.getJobID())).start();
+                                new Thread(new ActionsForReducer("localhost", 5000, "confirmation_from_worker", confirmFromWorker, wrapper.getJobID())).start();
                             }
 
-                            return;
+                            break;
 
                         }
 
@@ -543,24 +653,24 @@ public class ClientHandler implements Runnable {
 
 
             } catch (ClassNotFoundException e) {
-                throw new RuntimeException(e);
+                System.err.println("[ClientHandler] ClassNotFoundException: " + e.getMessage());
             } catch (IOException e) {
-                System.err.println("[Handler] Error: " + e.getMessage());
-                e.printStackTrace();
+                System.err.println("[ClientHandler] IOException (connection closed or error): " + e.getMessage());
+                // This is where a client disconnecting or a network error will be caught.
+            } finally {
+                // Ensure streams and socket are closed when the thread exits
+                // This is important because the ClientHandler processes only one request then terminates
                 try {
                     if (in != null) in.close();
                     if (out != null) out.close();
-                    socket.close();
+                    if (socket != null && !socket.isClosed()) socket.close();
                 } catch (IOException closeEx) {
-                    System.err.println("Error closing resources: " + closeEx.getMessage());
+                    System.err.println("Error closing resources in ClientHandler: " + closeEx.getMessage());
                 }
-                break;
-            }
-
-            break;
+                }
 
 
-        }
+
     }
 
 }

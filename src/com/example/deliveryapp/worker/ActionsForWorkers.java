@@ -5,15 +5,13 @@ package com.example.deliveryapp.worker;
  * @author Christina Perifana   || p3220160@aueb.gr
  */
 
+import com.example.deliveryapp.reducer.ActionsForReducer;
 import com.example.deliveryapp.util.*;
 
 import java.io.IOException;
 import java.io.ObjectOutputStream;
 import java.net.Socket;
-import java.util.AbstractMap;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
+import java.util.*;
 
 public class ActionsForWorkers implements Runnable {
 
@@ -34,13 +32,18 @@ public class ActionsForWorkers implements Runnable {
     ActionWrapper wrapper;
     Object obj;
     String action,opt;
+    String jobID;
 
     public void run() {
 
         wrapper = (ActionWrapper) received;
         obj = wrapper.getObject();
         action = wrapper.getAction();
+        jobID = wrapper.getJobID();
+        Object lock = JobCoordinator.getLock(UUID.fromString(jobID));
         List<Store> localStores = new ArrayList<>(storeMap.values());
+
+        String confirmationMsg = "";
 
         if (action.equalsIgnoreCase("json")) {
 
@@ -52,15 +55,19 @@ public class ActionsForWorkers implements Runnable {
                 if (!storeMap.containsKey(storeName.toLowerCase())) {
 
                     storeMap.put(storeName.toLowerCase(), store);
+                    confirmationMsg = storeName + " has been added to the store";
                     System.out.println("[Worker-" + workerId + "] Added store : '"+storeName+"' to its map successfully");
 
                 } else {
+                    confirmationMsg = storeName + " has already been added.";
                     throw new Exception();
                 }
 
             } catch (Exception e) {
-                System.err.println("Store already added");
+                System.err.println("Store already added to the map.");
             }
+
+            new Thread(new ActionsForReducer("localhost", 5000, "manager_confirmation", confirmationMsg, jobID )).start();
 
         } else if (action.equalsIgnoreCase("add_available_product")){
 
@@ -86,6 +93,7 @@ public class ActionsForWorkers implements Runnable {
 
                         temp1.setAvailability(true);
                         temp1.setAvailableAmount(quantity);
+                        confirmationMsg = product + " is now available in store " + storeName + " with quantity " + quantity;
                         System.out.println("[Worker-" + workerId + "] Changed available amount to: "+quantity+" successfully");
 
                         break;
@@ -95,16 +103,18 @@ public class ActionsForWorkers implements Runnable {
                 }
 
                 if (!found) {
-
+                    confirmationMsg = product + " does not exist in store: '"+storeName+".";
                     System.err.println("Product does not exist");
 
                 }
 
             } else {
-
+                confirmationMsg = storeName + "store does not exist.";
                 System.err.println("Store does not exist");
 
             }
+
+            new Thread(new ActionsForReducer("localhost", 5000, "manager_confirmation", confirmationMsg, jobID )).start();
 
         } else if (action.equalsIgnoreCase("remove_available_product")){
 
@@ -130,9 +140,11 @@ public class ActionsForWorkers implements Runnable {
                         if (temp1.getAvailableAmount() != 0){
                             temp1.setAvailability(false);
                             temp1.setAvailableAmount(0);
-                            System.out.println("[Worker-" + workerId + "] Made product: '"+product+"' un-available successfully");
+                            confirmationMsg = "Product '" + product + "' in store '" + storeName + "' has been made unavailable to customers.";
+                            System.out.println("[Worker-" + workerId + "] Made product: '"+product+"' unavailable to clients successfully");
                         } else {
-                            System.err.println("Product already un-available");
+                            confirmationMsg = "Product '" + product + "' already unavailable to customers.";
+                            System.err.println("Product already unavailable to customers.");
 
                         }
 
@@ -142,16 +154,18 @@ public class ActionsForWorkers implements Runnable {
                 }
 
                 if (!found) {
-
+                    confirmationMsg = product + " does not exist in store: '"+storeName+"'.";
                     System.err.println("Product does not exist");
 
                 }
 
             } else {
-
+                confirmationMsg = storeName + " does not exist.";
                 System.err.println("Store does not exist");
 
             }
+
+            new Thread(new ActionsForReducer("localhost", 5000, "manager_confirmation", confirmationMsg, jobID )).start();
 
         } else if (action.equalsIgnoreCase("add_new_product")){
 
@@ -178,6 +192,7 @@ public class ActionsForWorkers implements Runnable {
                     if (temp1.getProductName().equals(productName)) {
 
                         found = true;
+                        confirmationMsg = "Product '" + productName + "' already exists in store '" + storeName + "'.";
                         System.err.println("Product: "+productName+" already exists");
 
                         break;
@@ -191,16 +206,18 @@ public class ActionsForWorkers implements Runnable {
                     List<Product> prs = store.getProducts();
                     prs.add(pr);
                     store.setProducts(prs);
-
+                    confirmationMsg = "Product '" + productName + "' added to store '" + storeName + "' successfully!";
                     System.out.println("[Worker-" + workerId + "] Added product: '"+productName+"' to store: '"+storeName+"' successfully");
 
                 }
 
             } else {
-
+                confirmationMsg = storeName + " does not exist.";
                 System.err.println("Store does not exist");
 
             }
+
+            new Thread(new ActionsForReducer("localhost", 5000, "manager_confirmation", confirmationMsg, jobID )).start();
 
         } else if (action.equalsIgnoreCase("remove_old_product")){
 
@@ -225,7 +242,7 @@ public class ActionsForWorkers implements Runnable {
 
                         temp1.setClientAvailability(false);
                         store.setProducts(products);
-
+                        confirmationMsg = "Product '" + productName + " removed from store '" + storeName + "' successfully!";
                         System.out.println("[Worker-" + workerId + "] Removed product: '"+productName+"' from store: '"+storeName+"' successfully");
 
                         break;
@@ -234,16 +251,18 @@ public class ActionsForWorkers implements Runnable {
                 }
 
                 if (!found) {
-
+                    confirmationMsg = "Product '" + productName + "' does not exist.";
                     System.err.println("Product: "+productName+" does not exist");
 
                 }
 
             } else {
-
+                confirmationMsg = storeName + " does not exist.";
                 System.err.println("Store does not exist");
 
             }
+
+            new Thread(new ActionsForReducer("localhost", 5000, "manager_confirmation", confirmationMsg, jobID )).start();
 
         } else if (action.equalsIgnoreCase("showcase_stores")){
 
@@ -267,7 +286,17 @@ public class ActionsForWorkers implements Runnable {
                 objOut.writeObject(w);
                 objOut.flush();
 
+
+                synchronized (lock) {
+                    while (!JobCoordinator.getStatus(UUID.fromString(jobID)).equals("COMPLETED")) {
+                        lock.wait(500);
+                    }
+
+                }
+
             } catch (IOException e) {
+                throw new RuntimeException(e);
+            } catch (InterruptedException e) {
                 throw new RuntimeException(e);
             }
 
@@ -361,7 +390,6 @@ public class ActionsForWorkers implements Runnable {
 
         } else if (action.equalsIgnoreCase("purchase_product")) {
 
-            String confirmationMsg = "";
             opt = (String) obj;
             String[] parts = opt.split("_", 5);
 
@@ -433,15 +461,22 @@ public class ActionsForWorkers implements Runnable {
 
                 objOutToReducer.writeObject(wToReducer);
                 objOutToReducer.flush();
-                socketToReducer.close();
+
+                synchronized (lock) {
+                    while (!JobCoordinator.getStatus(UUID.fromString(jobID)).equals("COMPLETED")) {
+                        lock.wait(500);
+                    }
+
+                }
 
             } catch (IOException e) {
+                throw new RuntimeException(e);
+            } catch (InterruptedException e) {
                 throw new RuntimeException(e);
             }
 
         } else if (action.equalsIgnoreCase("rate_store")) {
 
-            String confirmationMsg;
             opt = (String) obj;
             String[] parts = opt.split("_", 5);
 
@@ -483,9 +518,16 @@ public class ActionsForWorkers implements Runnable {
 
                 objOutToReducer.writeObject(wToReducer);
                 objOutToReducer.flush();
-                socketToReducer.close();
 
-            } catch (IOException e) {
+
+                synchronized (lock) {
+                    while (!JobCoordinator.getStatus(UUID.fromString(jobID)).equals("COMPLETED")) {
+                        lock.wait(500);
+                    }
+
+                }
+
+            } catch (IOException | InterruptedException e) {
                 throw new RuntimeException(e);
             }
 

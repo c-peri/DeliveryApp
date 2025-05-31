@@ -6,11 +6,16 @@ package com.example.deliveryapp.reducer;
  */
 
 import com.example.deliveryapp.util.ActionWrapper;
+import com.example.deliveryapp.util.JobCoordinator;
 
+import java.io.IOException;
+import java.io.ObjectInputStream;
+import java.net.UnknownHostException;
 import java.util.List;
 
 import java.io.ObjectOutputStream;
 import java.net.Socket;
+import java.util.UUID;
 
 public class ActionsForReducer implements Runnable {
 
@@ -36,26 +41,43 @@ public class ActionsForReducer implements Runnable {
 
 
             if (workerResults instanceof String) {
-                ActionWrapper wrapper = new ActionWrapper(workerResults, "mapped_store_results", jobID);
+                ActionWrapper wrapper = new ActionWrapper(workerResults, action, jobID);
                 out.writeObject(wrapper);
                 out.flush();
 
-                System.out.println("[Reducer->Master] Sent result to master");
+                System.out.println("[Reducer->Master] Sent confirmation to master");
+
+                Object lock = JobCoordinator.getLock(UUID.fromString(jobID));
+                synchronized (lock) {
+                    while (!JobCoordinator.getStatus(UUID.fromString(jobID)).equals("COMPLETED")) {
+                        lock.wait(500);
+                    }
+
+                }
+
             } else {
                 ActionWrapper wrapper = new ActionWrapper(workerResults, this.action, jobID);
                 out.writeObject(wrapper);
                 out.flush();
-                System.out.println("[Reducer->Worker] Sent result to master");
+                System.out.println("[Reducer->Master] Sent result to master");
+                Object lock = JobCoordinator.getLock(UUID.fromString(jobID));
+                synchronized (lock) {
+                    while (!JobCoordinator.getStatus(UUID.fromString(jobID)).equals("COMPLETED")) {
+                        lock.wait(500);
+                    }
 
+                }
             }
 
-            Thread.sleep(100);
+
+            System.out.println("Job complete: " + jobID);
 
 
-        } catch (Exception e) {
-            e.printStackTrace();
+        } catch (UnknownHostException e) {
+            throw new RuntimeException(e);
+        } catch (IOException | InterruptedException e) {
+            throw new RuntimeException(e);
         }
 
     }
-
 }

@@ -95,10 +95,14 @@ public class Client implements Runnable {
                                 out.writeObject(new ActionWrapper(store, action, jobID));
                                 out.flush();
 
+                                printSearchResults(clientSocket);
+
                                 break;
 
                             } catch (IOException ex) {
                                 throw new RuntimeException(ex);
+                            } catch (ClassNotFoundException e) {
+                                throw new RuntimeException(e);
                             }
 
                         } else if (this.action.equalsIgnoreCase("add_available_product")) {
@@ -128,10 +132,14 @@ public class Client implements Runnable {
                                 out.writeObject(new ActionWrapper(name + "_" + product + "_" + quantity, action,jobID));
                                 out.flush();
 
+                                printSearchResults(clientSocket);
+
                                 break;
 
                             } catch (IOException ex) {
                                 throw new RuntimeException(ex);
+                            } catch (ClassNotFoundException e) {
+                                throw new RuntimeException(e);
                             }
 
                         } else if (this.action.equalsIgnoreCase("remove_available_product")) {
@@ -197,10 +205,14 @@ public class Client implements Runnable {
                                 out.writeObject(new ActionWrapper(storeName + "_" + productName + "_" + productType + "_" + price + "_" + availableAmount, action,jobID));
                                 out.flush();
 
+                                printSearchResults(clientSocket);
+
                                 break;
 
                             } catch (IOException ex) {
                                 throw new RuntimeException(ex);
+                            } catch (ClassNotFoundException e) {
+                                throw new RuntimeException(e);
                             }
 
                         } else if (this.action.equalsIgnoreCase("remove_old_product")) {
@@ -222,10 +234,14 @@ public class Client implements Runnable {
                                 out.writeObject(new ActionWrapper(storeName + "_" + productName, action,jobID));
                                 out.flush();
 
+                                printSearchResults(clientSocket);
+
                                 break;
 
                             } catch (IOException ex) {
                                 throw new RuntimeException(ex);
+                            } catch (ClassNotFoundException e) {
+                                throw new RuntimeException(e);
                             }
 
                         } else if (this.action.equalsIgnoreCase("total_sales_store")) {
@@ -244,10 +260,14 @@ public class Client implements Runnable {
                                 out.writeObject(new ActionWrapper(category, action,jobID));
                                 out.flush();
 
+                                printSearchResults(clientSocket);
+
                                 break;
 
                             } catch (IOException ex) {
                                 throw new RuntimeException(ex);
+                            } catch (ClassNotFoundException e) {
+                                throw new RuntimeException(e);
                             }
 
                         } else if (this.action.equalsIgnoreCase("total_sales_product")) {
@@ -573,9 +593,9 @@ public class Client implements Runnable {
                                 throw new RuntimeException(ex);
                             }
 
-                        } else if (this.action.equalsIgnoreCase("rate_store")) {
+                        } else  if (this.action.equalsIgnoreCase("rate_store")) {
 
-                            String longitude1, latitude1, store, preference;
+                            String longitude1, latitude1, storeName, ratingInput; // Renamed 'store' to 'storeName' for clarity
 
                             double longitude;
                             while (true) {
@@ -583,12 +603,11 @@ public class Client implements Runnable {
                                 System.out.print("> ");
                                 try {
                                     longitude = Double.parseDouble(in.next());
-                                    in.nextLine();
+                                    in.nextLine(); // consume newline
                                     break;
                                 } catch (NumberFormatException ignore) {
-                                    System.out.println("Invalid input");
-                                    in.nextLine();
-
+                                    System.out.println("Invalid input. Please enter a valid number.");
+                                    // clientScanner.nextLine(); // Already consumed by next()
                                 }
                             }
 
@@ -598,11 +617,11 @@ public class Client implements Runnable {
                                 System.out.print("> ");
                                 try {
                                     latitude = Double.parseDouble(in.next());
-                                    in.nextLine();
+                                    in.nextLine(); // consume newline
                                     break;
                                 } catch (NumberFormatException ignore) {
-                                    System.out.println("Invalid input");
-                                    in.nextLine();
+                                    System.out.println("Invalid input. Please enter a valid number.");
+                                    // clientScanner.nextLine(); // Already consumed by next()
                                 }
                             }
 
@@ -611,39 +630,47 @@ public class Client implements Runnable {
 
                             System.out.println("Please insert the name of the store you want to rate");
                             System.out.print("> ");
-                            store = in.nextLine();
+                            storeName = in.nextLine();
 
                             int stars;
                             while (true) {
-                                System.out.println("Please insert how many stars you want to rate the store with");
+                                System.out.println("Please insert how many stars you want to rate the store with (1-5)");
                                 System.out.print("> ");
                                 try {
                                     stars = Integer.parseInt(in.next());
-                                    in.nextLine();
+                                    in.nextLine(); // consume newline
                                     if (stars > 0 && stars <= 5) {
                                         break;
+                                    } else {
+                                        System.out.println("Rating must be between 1 and 5.");
                                     }
                                 } catch (NumberFormatException ignore) {
-                                    System.out.println("Invalid input");
-                                    in.nextLine();
+                                    System.out.println("Invalid input. Please enter a number.");
+                                    // clientScanner.nextLine(); // Already consumed by next()
                                 }
                             }
 
-                            preference = String.valueOf(stars);
+                            ratingInput = String.valueOf(stars);
 
                             try (Socket clientSocket = new Socket(host, port);){
 
                                 out = new ObjectOutputStream(clientSocket.getOutputStream());
-                                out.writeObject(new ActionWrapper(longitude1 + "_" + latitude1 + "_" + store + "_" + preference, action, jobID));
+
+                                String dataToSend = longitude1 + "_" + latitude1 + "_" + storeName + "_" + ratingInput;
+                                ActionWrapper requestWrapper = new ActionWrapper(dataToSend, action, jobID);
+
+                                out.writeObject(requestWrapper);
                                 out.flush();
+
 
                                 printSearchResults(clientSocket);
                                 break;
 
                             } catch (IOException ex) {
-                                throw new RuntimeException(ex);
+                                System.err.println("[CLIENT_ERROR] IOException during 'rate_store' client request/response: " + ex.getMessage());
+                                ex.printStackTrace();
+                                throw new RuntimeException(ex); // Re-throw to propagate error
                             }
-
                         }
 
                     }
@@ -665,29 +692,46 @@ public class Client implements Runnable {
 
     private static void printSearchResults(Socket clientSocket) throws IOException, ClassNotFoundException {
 
-        ObjectInputStream in = new ObjectInputStream(clientSocket.getInputStream());
-        Object obj = in.readObject();
-        ActionWrapper w = (ActionWrapper) obj;
-        String resAction = w.getAction();
-        Object resObj = w.getObject();
+        ObjectInputStream currentInStream = null;
 
-        System.out.println(resObj.toString());
+        try {
+            currentInStream = new ObjectInputStream(clientSocket.getInputStream());
 
-        if (resAction.equalsIgnoreCase("final_results")) {
+            Object obj = currentInStream.readObject();
 
-            List<Store> finalResults = (List<Store>) resObj;
+            ActionWrapper wrapper = (ActionWrapper) obj;
+            String resAction = wrapper.getAction();
+            Object resObj = wrapper.getObject();
 
-            if (finalResults.isEmpty()) {
-                System.out.println("No stores found matching your criteria.");
-            } else {
 
-                System.out.println("Found " + finalResults.size() + " stores");
+            if (resAction.equalsIgnoreCase("final_results")) {
+                List<Store> finalResults = (List<Store>) resObj;
 
-                for (Store store : finalResults) {
-                    System.out.println(">> " + store.getStoreName());
+                if (finalResults.isEmpty()) {
+                    System.out.println("[CLIENT] No stores found matching your criteria.");
+                } else {
+                    System.out.println("[CLIENT] Found " + finalResults.size() + " stores:");
+                    for (Store store : finalResults) {
+                        System.out.println(">> " + store.getStoreName() + " (Avg Rating: " + store.printStarRating() + ", Price Range: " + store.getStorePriceRange() + ")");
+                    }
                 }
-
+            } else if (resAction.equalsIgnoreCase("confirmation_message")) {
+                System.out.println("[CLIENT] Confirmation Message: " + resObj);
+            } else {
+                System.out.println("[CLIENT] Unhandled response action: " + resAction);
             }
+        } catch (EOFException e) {
+            System.err.println("[CLIENT_ERROR] EOFException in printSearchResults: The server might have closed the connection prematurely. " + e.getMessage());
+            e.printStackTrace();
+            throw e;
+        } catch (IOException e) {
+            System.err.println("[CLIENT_ERROR] IOException in printSearchResults: " + e.getMessage());
+            e.printStackTrace();
+            throw e;
+        } catch (ClassNotFoundException e) {
+            System.err.println("[CLIENT_ERROR] ClassNotFoundException in printSearchResults: " + e.getMessage());
+            e.printStackTrace();
+            throw e;
         }
     }
 

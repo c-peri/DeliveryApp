@@ -35,23 +35,6 @@ public class ActionsForMaster implements Runnable {
 
             ActionWrapper w = (ActionWrapper) received;
 
-            if (w.getAction().equals( "mapped_store_results")) {
-
-                List<Store> stores = (List<Store>) w.getObject();
-
-                if (stores.isEmpty()){
-                    System.out.println("No stores found matching your criteria");
-                } else {
-                    System.out.println("Found " + stores.size() + " stores");
-                    for (Store store : stores) {
-                        System.out.println(">" + store.getStoreName());
-                    }
-                }
-
-                return;
-
-            }
-
             Socket socket = new Socket(host, port);
             objOut = new ObjectOutputStream(socket.getOutputStream());
 
