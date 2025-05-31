@@ -392,6 +392,116 @@ public class ActionsForWorkers implements Runnable {
 
         } else if (action.equalsIgnoreCase("purchase_product")) {
 
+            // Changed from String 'opt' to a custom object 'purchaseDetails'
+            PurchaseDetails purchaseDetails = (PurchaseDetails) obj;
+
+            double longitude = purchaseDetails.getLongitude();
+            double latitude = purchaseDetails.getLatitude();
+            String storeName = purchaseDetails.getStoreName();
+            Map<String, Integer> productsToPurchase = purchaseDetails.getProductsToPurchase();
+
+            StringBuilder confirmationMsgBuilder = new StringBuilder(); // Use StringBuilder for multiple messages
+            boolean purchaseSuccessfulOverall = true; // Track if all items were processed without major issues
+
+            if (storeMap.containsKey(storeName.toLowerCase())) {
+
+                Store store = storeMap.get(storeName.toLowerCase());
+                double distance = GeoUtils.haversine(latitude, longitude, store.getLatitude(), store.getLongitude());
+
+                if (distance <= 5.0) { // Check if store is in range
+
+                    List<Product> storeProducts = store.getProducts();
+
+                    // Iterate over each product the client wants to purchase
+                    for (Map.Entry<String, Integer> entry : productsToPurchase.entrySet()) {
+                        String productName = entry.getKey();
+                        int quantityToBuy = entry.getValue();
+
+                        boolean productFound = false;
+                        String currentProductConfirmation = ""; // Confirmation for the current product
+
+                        for (Product productInStore : storeProducts) {
+                            if (productInStore.getProductName().equalsIgnoreCase(productName)) { // Use equalsIgnoreCase for consistency
+                                productFound = true;
+
+                                int availableAmount = productInStore.getAvailableAmount();
+
+                                if (availableAmount >= quantityToBuy) {
+                                    productInStore.setAvailableAmount(availableAmount - quantityToBuy);
+                                    productInStore.setProductSales(productInStore.getProductSales() + quantityToBuy); // Accumulate sales
+                                    currentProductConfirmation = "Purchased " + quantityToBuy + " of '" + productName + "' from '" + storeName + "'.";
+                                    System.out.println("[Worker-" + workerId + "] Purchased " + quantityToBuy + " of product: '"+productName+"' from store: '"+storeName+"' successfully");
+                                } else {
+                                    currentProductConfirmation = "Failed to purchase " + quantityToBuy + " of '" + productName + "'. Only " + availableAmount + " available.";
+                                    System.err.println("[Worker-" + workerId + "] Not enough quantity for product: '"+productName+"'. Available: " + availableAmount + ", Requested: " + quantityToBuy);
+                                    purchaseSuccessfulOverall = false; // Mark overall purchase as not fully successful
+                                }
+                                break; // Product found and processed
+                            }
+                        }
+
+                        if (!productFound) {
+                            currentProductConfirmation = "Product '" + productName + "' does not exist in store '" + storeName + "'.";
+                            System.err.println("[Worker-" + workerId + "] Product: '"+productName+"' not found in store: '"+storeName+"'.");
+                            purchaseSuccessfulOverall = false; // Mark overall purchase as not fully successful
+                        }
+                        confirmationMsgBuilder.append(currentProductConfirmation).append("\n"); // Append each product's message
+                    }
+
+                    // Update the store's products list (important for persistence if not already referencing same list)
+                    store.setProducts(storeProducts);
+
+                } else {
+                    confirmationMsgBuilder.append("Store '").append(storeName).append("' is out of range (distance: ").append(String.format("%.2f", distance)).append("km).");
+                    purchaseSuccessfulOverall = false;
+                }
+
+            } else {
+                confirmationMsgBuilder.append("Store '").append(storeName).append("' does not exist.");
+                purchaseSuccessfulOverall = false;
+            }
+
+            // Final confirmation message to send back
+            String finalConfirmationMsg = confirmationMsgBuilder.toString().trim(); // Remove trailing newline if any
+            if (finalConfirmationMsg.isEmpty()) {
+                finalConfirmationMsg = "No purchase attempts were made."; // Fallback if somehow nothing was appended
+            } else if (purchaseSuccessfulOverall) {
+                finalConfirmationMsg = "All items processed successfully:\n" + finalConfirmationMsg;
+            } else {
+                finalConfirmationMsg = "Some issues occurred during purchase:\n" + finalConfirmationMsg;
+            }
+
+
+            try {
+                Socket socketToReducer = new Socket(host, port);
+                ObjectOutputStream objOutToReducer = new ObjectOutputStream(socketToReducer.getOutputStream());
+
+                // Send the aggregated confirmation message
+                ActionWrapper wToReducer = new ActionWrapper(finalConfirmationMsg, "confirmation_from_worker", wrapper.getJobID());
+
+                objOutToReducer.writeObject(wToReducer);
+                objOutToReducer.flush();
+
+                synchronized (lock) {
+                    while (!JobCoordinator.getStatus(UUID.fromString(jobID)).equals("COMPLETED")) {
+                        lock.wait(500);
+                    }
+                }
+
+            } catch (IOException e) {
+                System.err.println("[Worker-" + workerId + "] IOException when sending purchase confirmation: " + e.getMessage());
+                throw new RuntimeException(e);
+            } catch (InterruptedException e) {
+                System.err.println("[Worker-" + workerId + "] InterruptedException during purchase confirmation job coordination: " + e.getMessage());
+                Thread.currentThread().interrupt(); // Restore interrupt status
+                throw new RuntimeException(e);
+            }
+
+        }
+        /*else if (action.equalsIgnoreCase("purchase_product")) {
+
+            PurchaseDetails purchaseDetails = (PurchaseDetails) obj;
+
             opt = (String) obj;
             String[] parts = opt.split("_", 5);
 
@@ -477,7 +587,7 @@ public class ActionsForWorkers implements Runnable {
                 throw new RuntimeException(e);
             }
 
-        } else if (action.equalsIgnoreCase("rate_store")) {
+        }*/ else if (action.equalsIgnoreCase("rate_store")) {
 
             opt = (String) obj;
             String[] parts = opt.split("_", 5);
