@@ -9,6 +9,8 @@ import com.example.deliveryapp.util.Client;
 
 import java.util.Scanner;
 
+import static com.example.deliveryapp.util.IPConfig.IP_ADDRESS;
+
 public class ClientDummyApp {
 
     public static void main(String[] args) throws InterruptedException {
@@ -41,7 +43,7 @@ public class ClientDummyApp {
 
                         System.out.println("---------------------------------------------------------------------------------");
 
-                        clientThread = new Thread(new Client("localhost", 5000, "null::showcase_stores", "Client"));
+                        clientThread = new Thread(new Client(IP_ADDRESS, 5000, "null::showcase_stores", "Client"));
                         clientThread.start();
                         try {
                             clientThread.join();
@@ -71,7 +73,7 @@ public class ClientDummyApp {
 
                             System.out.println("---------------------------------------------------------------------------------");
 
-                            clientThread = new Thread(new Client("localhost", 5000, "null::search_food_preference", "Client"));
+                            clientThread = new Thread(new Client(IP_ADDRESS, 5000, "null::search_food_preference", "Client"));
                             clientThread.start();
                             try {
                                 clientThread.join();
@@ -83,7 +85,7 @@ public class ClientDummyApp {
 
                             System.out.println("---------------------------------------------------------------------------------");
 
-                            clientThread = new Thread(new Client("localhost", 5000, "null::search_ratings", "Client"));
+                            clientThread = new Thread(new Client(IP_ADDRESS, 5000, "null::search_ratings", "Client"));
                             clientThread.start();
                             try {
                                 clientThread.join();
@@ -95,7 +97,7 @@ public class ClientDummyApp {
 
                             System.out.println("---------------------------------------------------------------------------------");
 
-                            clientThread = new Thread(new Client("localhost", 5000, "null::search_price_range", "Client"));
+                            clientThread = new Thread(new Client(IP_ADDRESS, 5000, "null::search_price_range", "Client"));
                             clientThread.start();
                             try {
                                 clientThread.join();
@@ -112,7 +114,7 @@ public class ClientDummyApp {
 
                         System.out.println("---------------------------------------------------------------------------------");
 
-                        clientThread = new Thread(new Client("localhost", 5000, "null::purchase_product", "Client"));
+                        clientThread = new Thread(new Client(IP_ADDRESS, 5000, "null::purchase_product", "Client"));
                         clientThread.start();
                         try {
                             clientThread.join();
@@ -127,7 +129,7 @@ public class ClientDummyApp {
 
                         System.out.println("---------------------------------------------------------------------------------");
 
-                        clientThread = new Thread(new Client("localhost", 5000, "null::rate_store", "Client"));
+                        clientThread = new Thread(new Client(IP_ADDRESS, 5000, "null::rate_store", "Client"));
                         clientThread.start();
                         try {
                             clientThread.join();

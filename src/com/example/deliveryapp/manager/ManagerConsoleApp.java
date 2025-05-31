@@ -9,6 +9,8 @@ import com.example.deliveryapp.util.Client;
 
 import java.util.Scanner;
 
+import static com.example.deliveryapp.util.IPConfig.IP_ADDRESS;
+
 public class ManagerConsoleApp {
 
     public static void main(String[] args) {
@@ -43,7 +45,7 @@ public class ManagerConsoleApp {
 
                         System.out.println("---------------------------------------------------------------------------------");
 
-                        clientThread = new Thread(new Client("localhost", 5000, "null::json", "Manager"));
+                        clientThread = new Thread(new Client(IP_ADDRESS, 5000, "null::json", "Manager"));
                         clientThread.start();
                         try {
                             clientThread.join();  
@@ -58,7 +60,7 @@ public class ManagerConsoleApp {
 
                         System.out.println("---------------------------------------------------------------------------------");
 
-                        clientThread = new Thread(new Client("localhost", 5000, "null::add_available_product", "Manager"));
+                        clientThread = new Thread(new Client(IP_ADDRESS, 5000, "null::add_available_product", "Manager"));
                         clientThread.start();
                         try {
                             clientThread.join();  
@@ -73,7 +75,7 @@ public class ManagerConsoleApp {
 
                         System.out.println("---------------------------------------------------------------------------------");
 
-                        clientThread = new Thread(new Client("localhost", 5000, "null::remove_available_product", "Manager"));
+                        clientThread = new Thread(new Client(IP_ADDRESS, 5000, "null::remove_available_product", "Manager"));
                         clientThread.start();
                         try {
                             clientThread.join();  
@@ -88,7 +90,7 @@ public class ManagerConsoleApp {
 
                         System.out.println("---------------------------------------------------------------------------------");
 
-                        clientThread = new Thread(new Client("localhost", 5000, "null::add_new_product", "Manager"));
+                        clientThread = new Thread(new Client(IP_ADDRESS, 5000, "null::add_new_product", "Manager"));
                         clientThread.start();
                         try {
                             clientThread.join();  
@@ -103,7 +105,7 @@ public class ManagerConsoleApp {
 
                         System.out.println("---------------------------------------------------------------------------------");
 
-                        clientThread = new Thread(new Client("localhost", 5000, "null::remove_old_product", "Manager"));
+                        clientThread = new Thread(new Client(IP_ADDRESS, 5000, "null::remove_old_product", "Manager"));
                         clientThread.start();
                         try {
                             clientThread.join();  
@@ -132,7 +134,7 @@ public class ManagerConsoleApp {
 
                             System.out.println("---------------------------------------------------------------------------------");
 
-                            clientThread = new Thread(new Client("localhost", 5000, "null::total_sales_store", "Manager"));
+                            clientThread = new Thread(new Client(IP_ADDRESS, 5000, "null::total_sales_store", "Manager"));
                             clientThread.start();
                             try {
                                 clientThread.join();
@@ -144,7 +146,7 @@ public class ManagerConsoleApp {
 
                             System.out.println("---------------------------------------------------------------------------------");
 
-                            clientThread = new Thread(new Client("localhost", 5000, "null::total_sales_product", "Manager"));
+                            clientThread = new Thread(new Client(IP_ADDRESS, 5000, "null::total_sales_product", "Manager"));
                             clientThread.start();
                             try {
                                 clientThread.join();

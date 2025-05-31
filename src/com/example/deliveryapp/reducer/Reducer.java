@@ -9,6 +9,8 @@ import com.example.deliveryapp.util.Client;
 import com.example.deliveryapp.util.Config;
 import com.example.deliveryapp.util.Server;
 
+import static com.example.deliveryapp.util.IPConfig.IP_ADDRESS;
+
 public class Reducer {
 
     public static void main(String[] args) {
@@ -42,7 +44,6 @@ public class Reducer {
                 }
             }
 
-            new Client("localhost", 5000, "Hello from Reducer to Master::null","Reducer").run();
         }).start();
 
     }

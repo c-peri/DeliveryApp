@@ -13,6 +13,8 @@ import java.io.ObjectOutputStream;
 import java.net.Socket;
 import java.util.*;
 
+import static com.example.deliveryapp.util.IPConfig.IP_ADDRESS;
+
 public class ActionsForWorkers implements Runnable {
 
     private String host;
@@ -67,7 +69,7 @@ public class ActionsForWorkers implements Runnable {
                 System.err.println("Store already added to the map.");
             }
 
-            new Thread(new ActionsForReducer("localhost", 5000, "manager_confirmation", confirmationMsg, jobID )).start();
+            new Thread(new ActionsForReducer(IP_ADDRESS, 5000, "manager_confirmation", confirmationMsg, jobID )).start();
 
         } else if (action.equalsIgnoreCase("add_available_product")){
 
@@ -114,7 +116,7 @@ public class ActionsForWorkers implements Runnable {
 
             }
 
-            new Thread(new ActionsForReducer("localhost", 5000, "manager_confirmation", confirmationMsg, jobID )).start();
+            new Thread(new ActionsForReducer(IP_ADDRESS, 5000, "manager_confirmation", confirmationMsg, jobID )).start();
 
         } else if (action.equalsIgnoreCase("remove_available_product")){
 
@@ -165,7 +167,7 @@ public class ActionsForWorkers implements Runnable {
 
             }
 
-            new Thread(new ActionsForReducer("localhost", 5000, "manager_confirmation", confirmationMsg, jobID )).start();
+            new Thread(new ActionsForReducer(IP_ADDRESS, 5000, "manager_confirmation", confirmationMsg, jobID )).start();
 
         } else if (action.equalsIgnoreCase("add_new_product")){
 
@@ -217,7 +219,7 @@ public class ActionsForWorkers implements Runnable {
 
             }
 
-            new Thread(new ActionsForReducer("localhost", 5000, "manager_confirmation", confirmationMsg, jobID )).start();
+            new Thread(new ActionsForReducer(IP_ADDRESS, 5000, "manager_confirmation", confirmationMsg, jobID )).start();
 
         } else if (action.equalsIgnoreCase("remove_old_product")){
 
@@ -262,7 +264,7 @@ public class ActionsForWorkers implements Runnable {
 
             }
 
-            new Thread(new ActionsForReducer("localhost", 5000, "manager_confirmation", confirmationMsg, jobID )).start();
+            new Thread(new ActionsForReducer(IP_ADDRESS, 5000, "manager_confirmation", confirmationMsg, jobID )).start();
 
         } else if (action.equalsIgnoreCase("showcase_stores")){
 

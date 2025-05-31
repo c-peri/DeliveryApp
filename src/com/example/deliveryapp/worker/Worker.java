@@ -39,7 +39,6 @@ public class Worker {
                 Server server = new Server("Worker-" + workerId, port, new Object(), StoreMap);
                 new Thread(server).start();
 
-                new Client("localhost", 5001, "Hello from Worker-" + workerId + " to Reducer::null", "Worker").run();
 
             } catch (Exception e) {
                 e.printStackTrace();
