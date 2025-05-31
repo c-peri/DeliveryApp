@@ -365,17 +365,33 @@ public class ClientHandler implements Runnable {
 
                         if (action.equalsIgnoreCase("purchase_product")) {
 
-                            opt = (String) obj;
-                            String[] parts;
-                            String storeName;
+                            if (obj instanceof PurchaseDetails) {
 
-                            parts = opt.split("_", 5);
+                                PurchaseDetails purchaseDetails = (PurchaseDetails) obj;
 
-                            storeName = parts[2];
-                            int workerId = HashStore.getWorkerID(storeName, numOfWorkers);
-                            int workerPort = 5001 + workerId;
+                                String storeName = purchaseDetails.getStoreName();
+                                System.out.println("[Master CH] Received purchase_product for store: " + storeName);
 
-                            new Thread(new ActionsForMaster(IP_ADDRESS, workerPort, wrapper, workerId)).start();
+                                int workerId = HashStore.getWorkerID(storeName, numOfWorkers);
+                                int workerPort = 5001 + workerId;
+                                new Thread(new ActionsForMaster(IP_ADDRESS, workerPort, wrapper, workerId)).start();
+
+                            } else {
+
+                                System.err.println("[Master CH] Error: obj for purchase_product is not PurchaseDetails. Type: " + (obj != null ? obj.getClass().getName() : "null"));
+
+                                ActionWrapper errorResponse = new ActionWrapper("Invalid purchase data format.", "error", jobID);
+                                out.writeObject(errorResponse);
+                                out.flush();
+
+                                synchronized (lock) {
+                                    JobCoordinator.setStatus(UUID.fromString(jobID), JobCoordinator.JobStatus.FAILED);
+                                    lock.notifyAll();
+                                }
+
+                                return;
+
+                            }
 
                         } else if (action.equalsIgnoreCase("rate_store")) {
 
@@ -640,10 +656,7 @@ public class ClientHandler implements Runnable {
 
                     } else if (action.equalsIgnoreCase("purchase_product")) {
 
-                        opt = (String) obj;
-                        String[] parts = opt.split("_", 5);
-
-                        int workerId = Integer.parseInt(parts[4]);
+                        int workerId = localPort - 5001;
 
                         new Thread(new ActionsForWorkers(IP_ADDRESS, 5001, wrapper, hashMap, workerId)).start();
 

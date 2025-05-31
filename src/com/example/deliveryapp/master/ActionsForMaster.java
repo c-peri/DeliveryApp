@@ -41,8 +41,8 @@ public class ActionsForMaster implements Runnable {
             if (w.getAction().equals("sales_food_category")  || w.getAction().equals("sales_product_category") ||
                 w.getAction().equals("showcase_stores") || w.getAction().equals("search_food_preference") ||
                 w.getAction().equals("search_ratings") ||  w.getAction().equals("search_price_range") ||
-                w.getAction().equals("purchase_product") || w.getAction().equals("rate_store") ||
-                w.getAction().equals("total_sales_store") || w.getAction().equals("total_sales_product")) {
+                w.getAction().equals("rate_store") || w.getAction().equals("total_sales_store") ||
+                w.getAction().equals("total_sales_product")) {
 
                 w.setObject(String.valueOf(workerID));
 

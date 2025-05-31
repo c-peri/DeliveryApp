@@ -14,7 +14,7 @@ public class JobCoordinator {
     public enum JobStatus {
         WAITING,
         SEARCH_DONE,
-        COMPLETED
+        FAILED, COMPLETED
     }
 
     private static final Map<UUID, Object> jobLocks = new HashMap<>();
