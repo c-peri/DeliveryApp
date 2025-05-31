@@ -135,7 +135,7 @@ public class ActionsForWorkers implements Runnable {
 
                 for (Product temp1 : products) {
 
-                    if (temp1.getProductName().equals(product)) {
+                    if (temp1.getProductName().equalsIgnoreCase(product)) {
 
                         found = true;
 
@@ -191,7 +191,7 @@ public class ActionsForWorkers implements Runnable {
 
                 for (Product temp1 : products) {
 
-                    if (temp1.getProductName().equals(productName)) {
+                    if (temp1.getProductName().equalsIgnoreCase(productName)) {
 
                         found = true;
                         confirmationMsg = "Product '" + productName + "' already exists in store '" + storeName + "'.";
@@ -238,7 +238,7 @@ public class ActionsForWorkers implements Runnable {
 
                 for (Product temp1 : products) {
 
-                    if (temp1.getProductName().equals(productName)) {
+                    if (temp1.getProductName().equalsIgnoreCase(productName)) {
 
                         found = true;
 
@@ -418,7 +418,7 @@ public class ActionsForWorkers implements Runnable {
 
                     for (Product product : products) {
 
-                        if (product.getProductName().equals(productName)) {
+                        if (product.getProductName().equalsIgnoreCase(productName)) {
 
                             int amount = product.getAvailableAmount();
                             found = true;

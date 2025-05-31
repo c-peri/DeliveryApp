@@ -161,10 +161,14 @@ public class Client implements Runnable {
                                 out.writeObject(new ActionWrapper(name + "_" + product, action,jobID));
                                 out.flush();
 
+                                printSearchResults(clientSocket);
+
                                 break;
 
                             } catch (IOException ex) {
                                 throw new RuntimeException(ex);
+                            } catch (ClassNotFoundException e) {
+                                throw new RuntimeException(e);
                             }
 
                         } else if (this.action.equalsIgnoreCase("add_new_product")) {
