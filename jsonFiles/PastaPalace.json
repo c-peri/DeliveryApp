@@ -27,7 +27,8 @@
       "AvailableAmount": 10,
       "Price": 5.00,
       "availability": true
-    }{
+    },
+    {
       "ProductName": "Italian Salad",
       "ProductType": "salad",
       "AvailableAmount": 3,

@@ -16,7 +16,7 @@
     },
     {
       "ProductName": "Shrimp Fried Noodles",
-      "ProductType": "mnoodles",
+      "ProductType": "noodles",
       "AvailableAmount": 3,
       "Price": 9.55,
       "availability": true
