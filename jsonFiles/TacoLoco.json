@@ -1,0 +1,60 @@
+{
+  "StoreName": "TacoLoco",
+  "Latitude": 28.0397618,
+  "Longitude": 33.702984,
+  "FoodCategory": "mexican",
+  "Stars": 5,
+  "NoOfVotes": 22,
+  "StoreLogo": "jsonFiles/logo2.png",
+  "Products": [
+    {
+      "ProductName": "Beef Taco",
+      "ProductType": "taco",
+      "AvailableAmount": 0,
+      "Price": 12.80,
+      "availability": false
+    },
+    {
+      "ProductName": "Chicken Taco",
+      "ProductType": "taco",
+      "AvailableAmount": 5,
+      "Price": 11.80,
+      "availability": true
+    },
+    {
+      "ProductName": "Nachos",
+      "ProductType": "side",
+      "AvailableAmount": 9,
+      "Price": 5.90,
+      "availability": true
+    },
+    {
+      "ProductName": "Beef Burrito",
+      "ProductType": "burrito",
+      "AvailableAmount": 15,
+      "Price": 10.90,
+      "availability": true
+    },
+    {
+      "ProductName": "Chicken Burrito",
+      "ProductType": "burrito",
+      "AvailableAmount": 10,
+      "Price": 9.90,
+      "availability": true
+    },
+    {
+      "ProductName": "Shrimp Burrito",
+      "ProductType": "burrito",
+      "AvailableAmount": 6,
+      "Price": 13.90,
+      "availability": true
+    },
+    {
+      "ProductName": "Bean Burrito",
+      "ProductType": "burrito",
+      "AvailableAmount": 12,
+      "Price": 7.90,
+      "availability": true
+    }
+  ]
+}

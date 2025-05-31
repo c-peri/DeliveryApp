@@ -1,0 +1,59 @@
+{
+  "StoreName": "PastaPalace",
+  "Latitude": 28.0753389,
+  "Longitude": 33.679645,
+  "FoodCategory": "italian",
+  "Stars": 4,
+  "NoOfVotes": 35,
+  "StoreLogo": "jsonFiles/logo3.png",
+  "Products": [
+    {
+      "ProductName": "Spaghetti Bolognese",
+      "ProductType": "pasta",
+      "AvailableAmount": 8,
+      "Price": 7.70,
+      "availability": true
+    },
+    {
+      "ProductName": "Lasagna",
+      "ProductType": "pasta",
+      "AvailableAmount": 5,
+      "Price": 12.20,
+      "availability": true
+    },
+    {
+      "ProductName": "Bruschetta",
+      "ProductType": "side",
+      "AvailableAmount": 10,
+      "Price": 5.00,
+      "availability": true
+    }{
+      "ProductName": "Italian Salad",
+      "ProductType": "salad",
+      "AvailableAmount": 3,
+      "Price": 6.80,
+      "availability": true
+    },
+    {
+      "ProductName": "Carbonara",
+      "ProductType": "pasta",
+      "AvailableAmount": 0,
+      "Price": 12.80,
+      "availability": false
+    },
+    {
+      "ProductName": "White Wine",
+      "ProductType": "drink",
+      "AvailableAmount": 12,
+      "Price": 4.90,
+      "availability": true
+    },
+    {
+      "ProductName": "Red Wine",
+      "ProductType": "drink",
+      "AvailableAmount": 11,
+      "Price": 4.90,
+      "availability": true
+    }
+  ]
+}

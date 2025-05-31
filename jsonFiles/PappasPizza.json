@@ -1,0 +1,45 @@
+{
+  "StoreName": "PappasPizza",
+  "Latitude": 28.0315936,
+  "Longitude": 33.7341143,
+  "FoodCategory": "pizzeria",
+  "Stars": 4.5,
+  "NoOfVotes": 86,
+  "StoreLogo": "jsonFiles/logo4.png",
+  "Products": [
+    {
+      "ProductName": "Margarita",
+      "ProductType": "pizza",
+      "AvailableAmount": 9,
+      "Price": 8.90,
+      "availability": true
+    },
+    {
+      "ProductName": "Special",
+      "ProductType": "pizza",
+      "AvailableAmount": 0,
+      "Price": 10.90,
+      "availability": false
+    },
+    {
+      "ProductName": "Truffle",
+      "ProductType": "pizza",
+      "AvailableAmount": 9,
+      "Price": 13.90,
+      "availability": true
+    },
+    {
+      "ProductName": "Garlic Bread",
+      "ProductType": "side",
+      "AvailableAmount": 10,
+      "Price": 3.90,
+      "availability": true
+    },
+    {  "ProductName": "Ceasar's",
+      "ProductType": "salad",
+      "AvailableAmount": 4,
+      "Price": 7.90,
+      "availability": true
+    }
+  ]
+}

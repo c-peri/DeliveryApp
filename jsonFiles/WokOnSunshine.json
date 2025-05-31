@@ -1,0 +1,46 @@
+{
+  "StoreName": "WokOnSunshine",
+  "Latitude": 27.8597069,
+  "Longitude": 33.8320685,
+  "FoodCategory": "asian",
+  "Stars": 5,
+  "NoOfVotes": 100,
+  "StoreLogo": "jsonFiles/logo6.png",
+  "Products": [
+    {
+      "ProductName": "Chicken Fried Noodles",
+      "ProductType": "noodles",
+      "AvailableAmount": 1,
+      "Price": 8.00,
+      "availability": true
+    },
+    {
+      "ProductName": "Shrimp Fried Noodles",
+      "ProductType": "mnoodles",
+      "AvailableAmount": 3,
+      "Price": 9.55,
+      "availability": true
+    },
+    {
+      "ProductName": "Teriyaki Fried Rice",
+      "ProductType": "rice",
+      "AvailableAmount": 3,
+      "Price": 8.50,
+      "availability": true
+    },
+    {
+      "ProductName": "Wakame Salad",
+      "ProductType": "salad",
+      "AvailableAmount": 4,
+      "Price": 5.50,
+      "availability": true
+    },
+    {
+      "ProductName": "Edamame Beans",
+      "ProductType": "side",
+      "AvailableAmount": 10,
+      "Price": 5.50,
+      "availability": true
+    }
+  ]
+}

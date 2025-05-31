@@ -1,0 +1,53 @@
+{
+  "StoreName": "SushiSpot",
+  "Latitude": 28.0262407,
+  "Longitude": 33.6009135,
+  "FoodCategory": "asian",
+  "Stars": 3.5,
+  "NoOfVotes": 30,
+  "StoreLogo": "jsonFiles/logo5.png",
+  "Products": [
+    {
+      "ProductName": "Umake Combo",
+      "ProductType": "sushi",
+      "AvailableAmount": 10,
+      "Price": 25.95,
+      "availability": true
+    },
+    {
+      "ProductName": "Miso Soup",
+      "ProductType": "side",
+      "AvailableAmount": 8,
+      "Price": 6.80,
+      "availability": true
+    },
+    {
+      "ProductName": "Shrimp Tempura",
+      "ProductType": "side",
+      "AvailableAmount": 4,
+      "Price": 5.80,
+      "availability": true
+    },
+    {
+      "ProductName": "Callifornia Roll",
+      "ProductType": "sushi",
+      "AvailableAmount": 10,
+      "Price": 7.80,
+      "availability": true
+    },
+    {
+      "ProductName": "Salmon Nigiri",
+      "ProductType": "sushi",
+      "AvailableAmount": 5,
+      "Price": 6.80,
+      "availability": true
+    },
+    {
+      "ProductName": "Sake",
+      "ProductType": "drink",
+      "AvailableAmount": 6,
+      "Price": 4.90,
+      "availability": true
+    }
+  ]
+}
