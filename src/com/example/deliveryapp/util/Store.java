@@ -30,7 +30,7 @@ public class Store implements Serializable {
     @Expose
     private String StoreLogo;
     @Expose
-    private List<Product> Products;
+    private List<Product> Products = Collections.synchronizedList(new ArrayList<>());
     private int storeSales = 0;
 
     private byte[] StoreLogoBytes;

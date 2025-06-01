@@ -20,10 +20,10 @@ public class ActionsForWorkers implements Runnable {
     private String host;
     private int port;
     private Object received;
-    private HashMap<String, Store> storeMap;
+    private Map<String, Store> storeMap = Collections.synchronizedMap(new HashMap<>());
     private int workerId;
 
-    public ActionsForWorkers(String host, int port, Object received, HashMap<String, Store> storeMap, int workerId) {
+    public ActionsForWorkers(String host, int port, Object received, Map<String, Store> storeMap, int workerId) {
         this.host = host;
         this.port = port;
         this.received = received;
@@ -84,24 +84,28 @@ public class ActionsForWorkers implements Runnable {
 
                 Store store = storeMap.get(storeName.toLowerCase());
                 boolean found = false;
-                List<Product> products;
-                products = store.getProducts();
 
-                for (Product temp1 : products) {
+                synchronized (store) {
+                    List<Product> products;
+                    products = store.getProducts();
 
-                    if (temp1.getProductName().equalsIgnoreCase(product)) {
+                    for (Product temp1 : products) {
 
-                        found = true;
+                        if (temp1.getProductName().equalsIgnoreCase(product)) {
 
-                        temp1.setAvailability(true);
-                        temp1.setAvailableAmount(quantity);
-                        confirmationMsg = product + " is now available in store " + storeName + " with quantity " + quantity;
-                        System.out.println("[Worker-" + workerId + "] Changed available amount to: "+quantity+" successfully");
+                            found = true;
 
-                        break;
+                            temp1.setAvailability(true);
+                            temp1.setAvailableAmount(quantity);
+                            confirmationMsg = product + " is now available in store " + storeName + " with quantity " + quantity;
+                            System.out.println("[Worker-" + workerId + "] Changed available amount to: " + quantity + " successfully");
+
+                            break;
+
+                        }
+
 
                     }
-
                 }
 
                 if (!found) {
@@ -131,30 +135,32 @@ public class ActionsForWorkers implements Runnable {
                 Store store = storeMap.get(storeName.toLowerCase());
                 boolean found = false;
 
-                List<Product> products;
-                products = store.getProducts();
+                synchronized (store) {
+                    List<Product> products;
+                    products = store.getProducts();
 
-                for (Product temp1 : products) {
+                    for (Product temp1 : products) {
 
-                    if (temp1.getProductName().equalsIgnoreCase(product)) {
+                        if (temp1.getProductName().equalsIgnoreCase(product)) {
 
-                        found = true;
+                            found = true;
 
-                        if (temp1.getAvailableAmount() != 0){
-                            temp1.setAvailability(false);
-                            temp1.setAvailableAmount(0);
-                            confirmationMsg = "Product '" + product + "' in store '" + storeName + "' has been made unavailable to customers.";
-                            System.out.println("[Worker-" + workerId + "] Made product: '"+product+"' unavailable to clients successfully");
-                        } else {
-                            confirmationMsg = "Product '" + product + "' already unavailable to customers.";
-                            System.err.println("Product already unavailable to customers.");
+                            if (temp1.getAvailableAmount() != 0) {
+                                temp1.setAvailability(false);
+                                temp1.setAvailableAmount(0);
+                                confirmationMsg = "Product '" + product + "' in store '" + storeName + "' has been made unavailable to customers.";
+                                System.out.println("[Worker-" + workerId + "] Made product: '" + product + "' unavailable to clients successfully");
+                            } else {
+                                confirmationMsg = "Product '" + product + "' already unavailable to customers.";
+                                System.err.println("Product already unavailable to customers.");
+
+                            }
+
+                            break;
 
                         }
 
-                        break;
-
                     }
-
                 }
 
                 if (!found) {
@@ -190,20 +196,24 @@ public class ActionsForWorkers implements Runnable {
                 Store store = storeMap.get(storeName.toLowerCase());
                 boolean found = false;
 
-                List<Product> products;
-                products = store.getProducts();
+                synchronized (store) {
 
-                for (Product temp1 : products) {
 
-                    if (temp1.getProductName().equalsIgnoreCase(productName)) {
+                    List<Product> products;
+                    products = store.getProducts();
 
-                        found = true;
-                        confirmationMsg = "Product '" + productName + "' already exists in store '" + storeName + "'.";
-                        System.err.println("Product: "+productName+" already exists");
+                    for (Product temp1 : products) {
 
-                        break;
+                        if (temp1.getProductName().equalsIgnoreCase(productName)) {
+
+                            found = true;
+                            confirmationMsg = "Product '" + productName + "' already exists in store '" + storeName + "'.";
+                            System.err.println("Product: " + productName + " already exists");
+
+                            break;
+                        }
+
                     }
-
                 }
 
                 if (!found) {
@@ -238,21 +248,24 @@ public class ActionsForWorkers implements Runnable {
                 Store store = storeMap.get(storeName.toLowerCase());
                 boolean found = false;
 
-                List<Product> products;
-                products = store.getProducts();
+                synchronized (store) {
+                    List<Product> products;
+                    products = store.getProducts();
 
-                for (Product temp1 : products) {
+                    for (Product temp1 : products) {
 
-                    if (temp1.getProductName().equalsIgnoreCase(productName)) {
+                        if (temp1.getProductName().equalsIgnoreCase(productName)) {
 
-                        found = true;
+                            found = true;
 
-                        temp1.setClientAvailability(false);
-                        store.setProducts(products);
-                        confirmationMsg = "Product '" + productName + "' removed from store '" + storeName + "' successfully!";
-                        System.out.println("[Worker-" + workerId + "] Removed product: '"+productName+"' from store: '"+storeName+"' successfully");
+                            temp1.setClientAvailability(false);
+                            store.setProducts(products);
+                            confirmationMsg = "Product '" + productName + "' removed from store '" + storeName + "' successfully!";
+                            System.out.println("[Worker-" + workerId + "] Removed product: '" + productName + "' from store: '" + storeName + "' successfully");
 
-                        break;
+                            break;
+
+                        }
 
                     }
 
@@ -413,59 +426,60 @@ public class ActionsForWorkers implements Runnable {
                 double distance = GeoUtils.haversine(latitude, longitude, store.getLatitude(), store.getLongitude());
 
                 if (distance <= 5.0) {
+                    synchronized (store) {
+                        List<Product> storeProducts = store.getProducts();
 
-                    List<Product> storeProducts = store.getProducts();
+                        for (Map.Entry<String, Integer> entry : productsToPurchase.entrySet()) {
 
-                    for (Map.Entry<String, Integer> entry : productsToPurchase.entrySet()) {
+                            String productName = entry.getKey();
+                            int quantityToBuy = entry.getValue();
 
-                        String productName = entry.getKey();
-                        int quantityToBuy = entry.getValue();
+                            boolean productFound = false;
+                            String currentProductConfirmation = "";
 
-                        boolean productFound = false;
-                        String currentProductConfirmation = "";
+                            for (Product productInStore : storeProducts) {
 
-                        for (Product productInStore : storeProducts) {
+                                if (productInStore.getProductName().equalsIgnoreCase(productName)) {
 
-                            if (productInStore.getProductName().equalsIgnoreCase(productName)) {
+                                    productFound = true;
 
-                                productFound = true;
+                                    int availableAmount = productInStore.getAvailableAmount();
 
-                                int availableAmount = productInStore.getAvailableAmount();
+                                    if (availableAmount >= quantityToBuy) {
 
-                                if (availableAmount >= quantityToBuy) {
+                                        productInStore.setAvailableAmount(availableAmount - quantityToBuy);
+                                        productInStore.setProductSales(productInStore.getProductSales() + quantityToBuy);
+                                        currentProductConfirmation = "Purchased " + quantityToBuy + " of '" + productName + "' from '" + storeName + "'.";
+                                        System.out.println("[Worker-" + workerId + "] Purchased " + quantityToBuy + " of product: '" + productName + "' from store: '" + storeName + "' successfully");
 
-                                    productInStore.setAvailableAmount(availableAmount - quantityToBuy);
-                                    productInStore.setProductSales(productInStore.getProductSales() + quantityToBuy);
-                                    currentProductConfirmation = "Purchased " + quantityToBuy + " of '" + productName + "' from '" + storeName + "'.";
-                                    System.out.println("[Worker-" + workerId + "] Purchased " + quantityToBuy + " of product: '"+productName+"' from store: '"+storeName+"' successfully");
+                                    } else {
 
-                                } else {
+                                        currentProductConfirmation = "Failed to purchase " + quantityToBuy + " of '" + productName + "'. Only " + availableAmount + " available.";
+                                        System.err.println("[Worker-" + workerId + "] Not enough quantity for product: '" + productName + "'. Available: " + availableAmount + ", Requested: " + quantityToBuy);
+                                        purchaseSuccessfulOverall = false;
 
-                                    currentProductConfirmation = "Failed to purchase " + quantityToBuy + " of '" + productName + "'. Only " + availableAmount + " available.";
-                                    System.err.println("[Worker-" + workerId + "] Not enough quantity for product: '"+productName+"'. Available: " + availableAmount + ", Requested: " + quantityToBuy);
-                                    purchaseSuccessfulOverall = false;
+                                    }
+
+                                    break;
 
                                 }
 
-                                break;
+                            }
+
+                            if (!productFound) {
+
+                                currentProductConfirmation = "Product '" + productName + "' does not exist in store '" + storeName + "'.";
+                                System.err.println("[Worker-" + workerId + "] Product: '" + productName + "' not found in store: '" + storeName + "'.");
+                                purchaseSuccessfulOverall = false;
 
                             }
 
-                        }
-
-                        if (!productFound) {
-
-                            currentProductConfirmation = "Product '" + productName + "' does not exist in store '" + storeName + "'.";
-                            System.err.println("[Worker-" + workerId + "] Product: '"+productName+"' not found in store: '"+storeName+"'.");
-                            purchaseSuccessfulOverall = false;
+                            confirmationMsgBuilder.append(currentProductConfirmation).append("\n");
 
                         }
 
-                        confirmationMsgBuilder.append(currentProductConfirmation).append("\n");
-
+                        store.setProducts(storeProducts);
                     }
-
-                    store.setProducts(storeProducts);
 
                 } else {
 
@@ -543,9 +557,10 @@ public class ActionsForWorkers implements Runnable {
                 double distance = GeoUtils.haversine(latitude, longitude, store.getLatitude(), store.getLongitude());
 
                 if (distance <= 5.0) {
-
-                    store.addStarRating(stars);
-                    confirmationMsg = "You gave " + stars + " stars to " + storeName + "!";
+                    synchronized (store) {
+                        store.addStarRating(stars);
+                        confirmationMsg = "You gave " + stars + " stars to " + storeName + "!";
+                    }
 
                 } else {
                     confirmationMsg = "Store out of range.";

@@ -8,7 +8,9 @@ package com.example.deliveryapp.util;
 import java.io.IOException;
 import java.net.ServerSocket;
 import java.net.Socket;
+import java.util.Collections;
 import java.util.HashMap;
+import java.util.Map;
 
 public class Server implements Runnable {
 
@@ -46,12 +48,14 @@ public class Server implements Runnable {
             while (true) {
 
                 Socket clientSocket = serverSocket.accept();
-                System.out.println("Accepted connection from " + clientSocket.getRemoteSocketAddress());
+                System.out.println("["+name +"] Accepted connection from " + clientSocket.getRemoteSocketAddress());
 
                 if (hashMap.containsKey("invalidKey") && hashMap.containsValue(new Store("invalid", 0, 0, "invalid", 0, 0, "invalid", null))){
                     new Thread(new ClientHandler(clientSocket)).start();
                 } else {
-                    new Thread(new ClientHandler(clientSocket,hashMap)).start();
+                    Map<String, Store> synchronizedHashMap = Collections.synchronizedMap(hashMap);
+
+                    new Thread(new ClientHandler(clientSocket,synchronizedHashMap)).start();
                 }
 
             }

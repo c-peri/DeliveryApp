@@ -10,6 +10,7 @@ import com.google.gson.JsonSyntaxException;
 
 import java.io.*;
 import java.net.Socket;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Scanner;
 import java.util.UUID;
@@ -93,7 +94,7 @@ public class Client implements Runnable {
                                 out.writeObject(new ActionWrapper(store, action, jobID));
                                 out.flush();
 
-                                printSearchResults(clientSocket);
+                                printSearchResults(clientSocket,role,null);
 
                                 break;
 
@@ -130,7 +131,7 @@ public class Client implements Runnable {
                                 out.writeObject(new ActionWrapper(name + "_" + product + "_" + quantity, action,jobID));
                                 out.flush();
 
-                                printSearchResults(clientSocket);
+                                printSearchResults(clientSocket,role,null);
 
                                 break;
 
@@ -159,7 +160,7 @@ public class Client implements Runnable {
                                 out.writeObject(new ActionWrapper(name + "_" + product, action,jobID));
                                 out.flush();
 
-                                printSearchResults(clientSocket);
+                                printSearchResults(clientSocket,role,null);
 
                                 break;
 
@@ -205,7 +206,7 @@ public class Client implements Runnable {
                                 out.writeObject(new ActionWrapper(storeName + "_" + productName + "_" + productType + "_" + price + "_" + availableAmount, action,jobID));
                                 out.flush();
 
-                                printSearchResults(clientSocket);
+                                printSearchResults(clientSocket,role,null);
 
                                 break;
 
@@ -232,7 +233,7 @@ public class Client implements Runnable {
                                 out.writeObject(new ActionWrapper(storeName + "_" + productName, action,jobID));
                                 out.flush();
 
-                                printSearchResults(clientSocket);
+                                printSearchResults(clientSocket,role,null);
 
                                 break;
 
@@ -256,7 +257,7 @@ public class Client implements Runnable {
                                 out.writeObject(new ActionWrapper(category, action,jobID));
                                 out.flush();
 
-                                printSearchResults(clientSocket);
+                                printSearchResults(clientSocket,action,null);
 
                                 break;
 
@@ -280,10 +281,15 @@ public class Client implements Runnable {
                                 out.writeObject(new ActionWrapper(category, action,jobID));
                                 out.flush();
 
+                                printSearchResults(clientSocket,action,category);
+
+
                                 break;
 
                             } catch (IOException ex) {
                                 throw new RuntimeException(ex);
+                            } catch (ClassNotFoundException e) {
+                                throw new RuntimeException(e);
                             }
 
                         }
@@ -344,7 +350,7 @@ public class Client implements Runnable {
                                 out.flush();
                                 System.out.println(clientSocket.getLocalSocketAddress());
 
-                                printSearchResults(clientSocket);
+                                printSearchResults(clientSocket, role,null);
 
                                 break;
 
@@ -400,7 +406,7 @@ public class Client implements Runnable {
                                 out.flush();
                                 System.out.println(clientSocket.getLocalSocketAddress());
 
-                                printSearchResults(clientSocket);
+                                printSearchResults(clientSocket,role,null);
                                 break;
 
 
@@ -468,7 +474,7 @@ public class Client implements Runnable {
                                 out.writeObject(new ActionWrapper(longitude1 + "_" + latitude1 + "_" + preference, action, jobID));
                                 out.flush();
 
-                                printSearchResults(clientSocket);
+                                printSearchResults(clientSocket,role,null);
                                 break;
 
                             } catch (IOException ex) {
@@ -523,7 +529,7 @@ public class Client implements Runnable {
                                 out.writeObject(new ActionWrapper(longitude1 + "_" + latitude1 + "_" + preference, action, jobID));
                                 out.flush();
 
-                                printSearchResults(clientSocket);
+                                printSearchResults(clientSocket,role,null);
                                 break;
 
                             } catch (IOException ex) {
@@ -580,7 +586,7 @@ public class Client implements Runnable {
                                 out.writeObject(new ActionWrapper(longitude1 + "_" + latitude1 + "_" + store + "_" + product, action, jobID));
                                 out.flush();
 
-                                printSearchResults(clientSocket);
+                                printSearchResults(clientSocket,role,null);
                                 break;
 
                             } catch (IOException ex) {
@@ -653,7 +659,7 @@ public class Client implements Runnable {
                                 out.writeObject(requestWrapper);
                                 out.flush();
 
-                                printSearchResults(clientSocket);
+                                printSearchResults(clientSocket,role,null);
                                 break;
 
                             } catch (IOException ex) {
@@ -680,7 +686,7 @@ public class Client implements Runnable {
 
     }
 
-    private static void printSearchResults(Socket clientSocket) throws IOException, ClassNotFoundException {
+    private static void printSearchResults(Socket clientSocket, String role, String opt) throws IOException, ClassNotFoundException {
 
         ObjectInputStream currentInStream;
 
@@ -698,47 +704,81 @@ public class Client implements Runnable {
 
                 List<Store> finalResults = (List<Store>) resObj;
 
-                if (finalResults.isEmpty()) {
+                if (role.equalsIgnoreCase("total_sales_store")) {
+                    int total = 0;
 
-                    System.out.println("[CLIENT] No stores found matching your criteria.");
+                    for (Store s : finalResults) {
+
+                        s.setStoreSales();
+                        System.out.println(s.getStoreName() + " : " + s.getStoreSales());
+                        total += s.getStoreSales();
+
+                    }
+
+                    System.out.println("Total : " + total);
+
+
+                } else if (role.equalsIgnoreCase("total_sales_product")) {
+
+                    int total = 0;
+
+                    for (Store s : finalResults) {
+                        System.out.println(s.getStoreName() + ":");
+                        for (Product p : s.getProducts()) {
+                            if (p.getProductType().equalsIgnoreCase(opt)) {
+                                System.out.println("- " + p.getProductName() + " : " + p.getProductSales());
+                                total += p.getProductSales();
+                            }
+
+                        }
+                    }
+
+                    System.out.println("Total : " + total);
 
                 } else {
 
-                    System.out.println("[CLIENT] Found " + finalResults.size() + " stores:");
+                    if (finalResults.isEmpty()) {
 
-                    for (Store store : finalResults) {
-                        System.out.println(">> " + store.getStoreName() + " (Avg Rating: " + store.printStarRating() + ", Price Range: " + store.getStorePriceRange() + ")");
+                        System.out.println("["+role+"] No stores found matching your criteria.");
+
+                    } else {
+
+                        System.out.println("["+role+"] Found " + finalResults.size() + " stores:");
+
+                        for (Store store : finalResults) {
+                            System.out.println(">> " + store.getStoreName() + " (Avg Rating: " + store.printStarRating() + ", Price Range: " + store.getStorePriceRange() + ")");
+                        }
+
                     }
-
                 }
 
             } else if (resAction.equalsIgnoreCase("confirmation_message")) {
 
-                System.out.println("[CLIENT] Confirmation Message: " + resObj);
+                System.out.println("["+role+"] Confirmation Message: " + resObj);
 
             } else {
 
-                System.out.println("[CLIENT] Unhandled response action: " + resAction);
+                System.out.println("["+role+"] Unhandled response action: " + resAction);
 
             }
 
         } catch (EOFException e) {
 
-            System.err.println("[CLIENT_ERROR] EOFException in printSearchResults: The server might have closed the connection prematurely. " + e.getMessage());
+            System.err.println("["+role+"_ERROR] EOFException in printSearchResults: The server might have closed the connection prematurely. " + e.getMessage());
             e.printStackTrace();
 
             throw e;
 
         } catch (IOException e) {
 
-            System.err.println("[CLIENT_ERROR] IOException in printSearchResults: " + e.getMessage());
+            System.err.println("["+role+"_ERROR] IOException in printSearchResults: " + e.getMessage());
             e.printStackTrace();
 
             throw e;
 
         } catch (ClassNotFoundException e) {
 
-            System.err.println("[CLIENT_ERROR] ClassNotFoundException in printSearchResults: " + e.getMessage());
+            System.err.println("["+role+"_ERROR] ClassNotFoundException in printSearchResults: " + e.getMessage());
             e.printStackTrace();
 
             throw e;

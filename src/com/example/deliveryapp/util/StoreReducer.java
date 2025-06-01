@@ -18,7 +18,7 @@ public class StoreReducer {
         }
 
         return switch (key) {
-            case "within_range", "filtered_store" -> new ArrayList<>(stores);
+            case "within_range", "filtered_store", "sales_store", "sales_product" -> new ArrayList<>(stores);
             default -> Collections.emptyList();
         };
 

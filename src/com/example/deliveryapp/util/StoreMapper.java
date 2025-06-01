@@ -59,12 +59,12 @@ public class StoreMapper {
             pass = switch (filterMode) {
                 case SALES_STORE -> {
                     if (store.getFoodCategory().equals(category)) {
-                        result.add(new AbstractMap.SimpleEntry<>("filtered_store", store));
+                        result.add(new AbstractMap.SimpleEntry<>("sales_store", store));
                     }
                     yield false;
                 }
                 case SALES_PRODUCT -> {
-                    result.add(new AbstractMap.SimpleEntry<>("filtered_store", store));
+                    result.add(new AbstractMap.SimpleEntry<>("sales_product", store));
                     yield false;
                 }
                 default -> true;

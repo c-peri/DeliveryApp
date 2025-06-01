@@ -21,7 +21,7 @@ public class ClientHandler implements Runnable {
     private static volatile int workersResponded = 0;
     private static final Object reducerLock = new Object();
     private final Socket socket;
-    private HashMap<String, Store> hashMap;
+    private Map<String, Store> hashMap = Collections.synchronizedMap(new HashMap<>());
     private ObjectOutputStream out;
     private ObjectInputStream in;
 
@@ -45,7 +45,7 @@ public class ClientHandler implements Runnable {
         }
     }
 
-    public ClientHandler(Socket socket, HashMap<String, Store> hashMap) {
+    public ClientHandler(Socket socket, Map <String, Store> hashMap) {
         this(socket);
         this.hashMap = hashMap;
     }
@@ -74,27 +74,28 @@ public class ClientHandler implements Runnable {
 
         synchronized (reducerLock) {
 
-            System.out.println("Starting map, workers responded: " + workersResponded);
-            System.out.println("JobID: " + jobID);
-            System.out.println("ResultList: " + resultList);
+            System.out.println("[Reducer] Starting mapping process, workers responded: " + workersResponded);
+            System.out.println("[Reducer] Mapping for JobID: " + jobID);
+            System.out.println("[Reducer] ResultList: " + resultList);
 
             int currentExpectedWorkers = Config.getNumberOfWorkers();
 
             if (!resultList.isEmpty()) {
                 allMappedResults.addAll(resultList);
             } else {
-                System.out.println("Searching stores...");
+                System.out.println("[Reducer] Searching stores...");
             }
 
             workersResponded++;
 
             if (workersResponded >= currentExpectedWorkers) {
 
-                System.out.println("Search complete.");
+                System.out.println("[Reducer] Workers responded: " + workersResponded);
+
+                System.out.println("[Reducer] Search complete.");
 
                 List<AbstractMap.SimpleEntry<String, Store>> resultsToProcess = new ArrayList<>(allMappedResults);
                 allMappedResults.clear();
-                System.out.println("workers responded: " + workersResponded);
                 workersResponded = 0;
 
                 Map<String, List<Store>> grouped = new HashMap<>();
@@ -116,16 +117,14 @@ public class ClientHandler implements Runnable {
                     reducedList.addAll(reducer.reduce("filtered_store", grouped.get("filtered_store")));
                 } else if (grouped.containsKey("within_range")) {
                     reducedList.addAll(reducer.reduce("within_range", grouped.get("within_range")));
+                } else if (grouped.containsKey("sales_store")) {
+                    reducedList.addAll(reducer.reduce("sales_store", grouped.get("sales_store")));
+                } else if (grouped.containsKey("sales_product")) {
+                    reducedList.addAll(reducer.reduce("sales_product", grouped.get("sales_product")));
                 }
 
                 Thread thread = new Thread(new ActionsForReducer(IP_ADDRESS, 5000, action, reducedList, jobID));
                 thread.start();
-//                try {
-//                    thread.join();
-//                } catch (InterruptedException e) {
-//                    throw new RuntimeException(e);
-//                }
-
 
             }
 
@@ -158,20 +157,12 @@ public class ClientHandler implements Runnable {
 
                 case 5000:
 
-                    System.out.println(socket.getPort());
-
                     if (action.startsWith("mapped_store_results")) {
 
                         if (action.equalsIgnoreCase("mapped_store_results")) {
 
-                            System.out.println(wrapper.getObject());
-                            System.out.println(wrapper.getAction());
-
                             List<Store> finalResults = (List<Store>) wrapper.getObject();
                             String receivedJobID = wrapper.getJobID();
-
-                            System.out.println(receivedJobID);
-                            System.out.println(finalResults);
 
                             addFinalResults(finalResults, receivedJobID);
 
@@ -188,49 +179,38 @@ public class ClientHandler implements Runnable {
                             String receivedJobID = wrapper.getJobID();
                             int total = 0;
 
-                            System.out.println(receivedJobID);
+                            System.out.println("[Master] Sending sales statistics to Manager for JobID: " + receivedJobID);
 
-                            for (Store s : finalResults) {
+                            addFinalResults(finalResults, receivedJobID);
 
-                                s.setStoreSales();
-                                System.out.println(s.getStoreName() + " : " + s.getStoreSales());
-                                total += s.getStoreSales();
-
+                            synchronized (lock) {
+                                JobCoordinator.setStatus(UUID.fromString(jobID), JobCoordinator.JobStatus.SEARCH_DONE);
+                                lock.notifyAll();
                             }
 
-                            System.out.println("Total : " + total);
-
-                            return;
 
                         } else {
 
-                            String[] parts1 = action.split("_", 4);
-
                             List<Store> finalResults = (List<Store>) wrapper.getObject();
                             String receivedJobID = wrapper.getJobID();
-                            int total = 0;
 
-                            System.out.println(receivedJobID);
+                            System.out.println("[Master] Sending sales statistics to Manager for JobID: " + receivedJobID);
 
-                            for (Store s : finalResults) {
-                                for (Product p : s.getProducts()) {
-                                    if (p.getProductType().equalsIgnoreCase(parts1[3])) {
-                                        System.out.println(s.getStoreName() + " : " + p.getProductSales());
-                                        total += p.getProductSales();
-                                    }
 
-                                }
+                            addFinalResults(finalResults, receivedJobID);
+
+                            synchronized (lock) {
+                                JobCoordinator.setStatus(UUID.fromString(jobID), JobCoordinator.JobStatus.SEARCH_DONE);
+                                lock.notifyAll();
                             }
-
-                            System.out.println("Total : " + total);
-
-                            return;
 
                         }
 
                     } else if (action.equalsIgnoreCase("json") || action.equalsIgnoreCase("add_available_product") ||
                                action.equalsIgnoreCase("remove_available_product") || action.equalsIgnoreCase("add_new_product") ||
-                               action.equalsIgnoreCase("remove_old_product")) {
+                               action.equalsIgnoreCase("remove_old_product") ||
+                               action.equalsIgnoreCase("total_sales_store") ||
+                               action.equalsIgnoreCase("total_sales_product")) {
 
                         if (action.equalsIgnoreCase("json")) {
 
@@ -242,10 +222,6 @@ public class ClientHandler implements Runnable {
                                 int workerPort = 5001 + workerId;
 
                                 new Thread(new ActionsForMaster(IP_ADDRESS, workerPort, wrapper, workerId)).start();
-
-                            } else {
-
-                                System.out.println("[Handler]->[Master] Message received: " + input);
 
                             }
 
@@ -304,6 +280,12 @@ public class ClientHandler implements Runnable {
                             int workerPort = 5001 + workerId;
 
                             new Thread(new ActionsForMaster(IP_ADDRESS, workerPort, wrapper, workerId)).start();
+                        } else if (action.equalsIgnoreCase("total_sales_store") || action.equalsIgnoreCase("total_sales_product")) {
+
+                            for (int i = 1; i <= numOfWorkers; i++) {
+                                ActionWrapper clonedWrapper = new ActionWrapper(obj, action, jobID);
+                                new Thread(new ActionsForMaster(IP_ADDRESS, 5001 + i, clonedWrapper, i)).start();
+                            }
                         }
 
                         Object clientResults;
@@ -320,7 +302,6 @@ public class ClientHandler implements Runnable {
                         synchronized (tracker.monitor) {
                             while (tracker.result == null) {
                                 try {
-                                    System.out.println("[WAIT] Waiting on jobID: " + jobID);
                                     tracker.monitor.wait();
                                 } catch (InterruptedException e) {
                                     Thread.currentThread().interrupt();
@@ -336,7 +317,7 @@ public class ClientHandler implements Runnable {
 
                         }
 
-                        System.out.println("Printing " + clientResults);
+                        System.out.println("[Master] Sending results for JobID: " + jobID);
 
                         if (clientResults instanceof List<?>) {
 
@@ -370,7 +351,7 @@ public class ClientHandler implements Runnable {
                                 PurchaseDetails purchaseDetails = (PurchaseDetails) obj;
 
                                 String storeName = purchaseDetails.getStoreName();
-                                System.out.println("[Master CH] Received purchase_product for store: " + storeName);
+                                System.out.println("[Master] Received purchase request for store: " + storeName);
 
                                 int workerId = HashStore.getWorkerID(storeName, numOfWorkers);
                                 int workerPort = 5001 + workerId;
@@ -378,7 +359,7 @@ public class ClientHandler implements Runnable {
 
                             } else {
 
-                                System.err.println("[Master CH] Error: obj for purchase_product is not PurchaseDetails. Type: " + (obj != null ? obj.getClass().getName() : "null"));
+                                System.err.println("[Master] Error: obj for purchase_product is not PurchaseDetails. Type: " + (obj != null ? obj.getClass().getName() : "null"));
 
                                 ActionWrapper errorResponse = new ActionWrapper("Invalid purchase data format.", "error", jobID);
                                 out.writeObject(errorResponse);
@@ -431,7 +412,6 @@ public class ClientHandler implements Runnable {
                         synchronized (tracker.monitor) {
                             while (tracker.result == null) {
                                 try {
-                                    System.out.println("[WAIT] Waiting on jobID: " + jobID);
                                     tracker.monitor.wait();
                                 } catch (InterruptedException e) {
                                     Thread.currentThread().interrupt();
@@ -445,7 +425,7 @@ public class ClientHandler implements Runnable {
                             }
                         }
 
-                        System.out.println("Printing " + clientResults);
+                        System.out.println("[Master] Sending results for JobID: " + jobID);
 
                         if (clientResults instanceof List<?>) {
 
@@ -468,24 +448,17 @@ public class ClientHandler implements Runnable {
 
                         return;
 
-                    } else if (action.equalsIgnoreCase("total_sales_store") || action.equalsIgnoreCase("total_sales_product")) {
-
-                        for (int i = 1; i <= numOfWorkers; i++) {
-                            ActionWrapper clonedWrapper = new ActionWrapper(obj, action, jobID);
-                            new Thread(new ActionsForMaster(IP_ADDRESS, 5001 + i, clonedWrapper, i)).start();
-                        }
-
                     } else if (action.equalsIgnoreCase("confirmation_from_worker")) {
 
-                        System.out.println("[MASTER] Master received 'confirmation_from_worker' for JobID: " + jobID + " from Reducer (port " + socket.getPort() + ").");
+                        System.out.println("[Master] Master received 'confirmation_from_worker' for JobID: " + jobID + " from Reducer (port " + socket.getPort() + ").");
                         String confirmationMessageFromWorker = (String) wrapper.getObject();
-                        System.out.println("[MASTER] Confirmation message content from Reducer: '" + confirmationMessageFromWorker + "'");
+                        System.out.println("[Master] Confirmation message content from Reducer: '" + confirmationMessageFromWorker + "'");
 
                         JobTracker targetTracker;
                         synchronized (jobTrackersLock) {
                             targetTracker = jobTrackers.get(jobID);
                             if (targetTracker == null) {
-                                System.err.println("[MASTER_CH_ERROR] JobTracker for JobID " + jobID + " NOT FOUND .");
+                                System.err.println("[Master_ERROR] JobTracker for JobID " + jobID + " NOT FOUND .");
 
                                 return;
                             }
@@ -505,15 +478,14 @@ public class ClientHandler implements Runnable {
 
                     } else if (action.equalsIgnoreCase("manager_confirmation")) {
 
-                        System.out.println("[MASTER] Master received 'manager_confirmation' for JobID: " + jobID + " from Worker/Confirmation Sender.");
                         String confirmationMessageFromWorker = (String) wrapper.getObject();
-                        System.out.println("[MASTER] Confirmation message content: '" + confirmationMessageFromWorker + "'");
+                        System.out.println("[Master] Confirmation message content: '" + confirmationMessageFromWorker + "'");
 
                         JobTracker targetTracker;
                         synchronized (jobTrackersLock) {
                             targetTracker = jobTrackers.get(jobID);
                             if (targetTracker == null) {
-                                System.err.println("[MASTER_CH_ERROR] JobTracker for JobID " + jobID + " NOT FOUND for manager confirmation.");
+                                System.err.println("[Master_ERROR] JobTracker for JobID " + jobID + " NOT FOUND for manager confirmation.");
                                 return;
                             }
                         }
@@ -534,8 +506,6 @@ public class ClientHandler implements Runnable {
                     break;
 
                 case 5001:
-
-                    System.out.println(socket.getPort());
 
                     if (action.startsWith("mapped_store_results") || action.equalsIgnoreCase("confirmation_from_worker")) {
 
@@ -562,8 +532,6 @@ public class ClientHandler implements Runnable {
 
                 default:
 
-                    System.out.println(socket.getPort());
-
                     if (action.equalsIgnoreCase("json")) {
 
                         Store store = (Store) obj;
@@ -574,8 +542,6 @@ public class ClientHandler implements Runnable {
 
                             new Thread(new ActionsForWorkers(IP_ADDRESS, 5001, wrapper, hashMap, workerId)).start();
 
-                        } else {
-                            System.out.println("[Handler] Message received: " + input);
                         }
 
                     } else if (action.equalsIgnoreCase("add_available_product")) {

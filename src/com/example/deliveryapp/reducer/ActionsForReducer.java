@@ -45,7 +45,6 @@ public class ActionsForReducer implements Runnable {
                 out.writeObject(wrapper);
                 out.flush();
 
-                System.out.println("[Reducer->Master] Sent confirmation to master");
 
                 Object lock = JobCoordinator.getLock(UUID.fromString(jobID));
                 synchronized (lock) {
@@ -60,7 +59,6 @@ public class ActionsForReducer implements Runnable {
                 ActionWrapper wrapper = new ActionWrapper(workerResults, this.action, jobID);
                 out.writeObject(wrapper);
                 out.flush();
-                System.out.println("[Reducer->Master] Sent result to master");
 
                 Object lock = JobCoordinator.getLock(UUID.fromString(jobID));
                 synchronized (lock) {
