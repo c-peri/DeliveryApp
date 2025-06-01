@@ -161,6 +161,14 @@ public class Store implements Serializable {
 
     public int getStoreSales(){ return  this.storeSales; }
 
+    public double getStoreSalesMoney() {
+        double total = 0;
+        for (Product p : Products){
+            total += p.getProductSalesMoney();
+        }
+        return total;
+    }
+
     @Override
     public String toString() {
         return "StoreName = '" + StoreName + '\'' +

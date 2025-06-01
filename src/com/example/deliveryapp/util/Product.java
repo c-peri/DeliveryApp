@@ -80,6 +80,8 @@ public class Product implements Serializable {
 
     public void setProductSales(int productSales) { this.productSales += productSales; }
 
+    public double getProductSalesMoney() { return this.productSales * this.Price; }
+
     public int getProductSales() { return this.productSales; }
 
     @Override

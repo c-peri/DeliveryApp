@@ -705,35 +705,57 @@ public class Client implements Runnable {
                 List<Store> finalResults = (List<Store>) resObj;
 
                 if (role.equalsIgnoreCase("total_sales_store")) {
+
                     int total = 0;
+                    double totalMoney = 0;
 
                     for (Store s : finalResults) {
 
                         s.setStoreSales();
-                        System.out.println(s.getStoreName() + " : " + s.getStoreSales());
+                        System.out.println(s.getStoreName() + ": " + s.getStoreSales() + " ($" + s.getStoreSalesMoney() + ")");
                         total += s.getStoreSales();
+                        totalMoney += s.getStoreSalesMoney();
 
                     }
 
-                    System.out.println("Total : " + total);
-
+                    if (!finalResults.isEmpty()) {
+                        System.out.println("Total: " + total + " ($" + totalMoney + ")");
+                    } else {
+                        System.out.println("No sales info found.");
+                    }
 
                 } else if (role.equalsIgnoreCase("total_sales_product")) {
 
                     int total = 0;
+                    double totalMoney = 0;
 
                     for (Store s : finalResults) {
-                        System.out.println(s.getStoreName() + ":");
+
+                        System.out.println(s.getStoreName() + ": ");
+                        double totalStoreMoney = 0;
+
                         for (Product p : s.getProducts()) {
+
                             if (p.getProductType().equalsIgnoreCase(opt)) {
-                                System.out.println("- " + p.getProductName() + " : " + p.getProductSales());
+
+                                System.out.println("- " + p.getProductName() + ": " + p.getProductSales()+ " ($" + p.getProductSalesMoney() + ")");
                                 total += p.getProductSales();
+                                totalMoney += p.getProductSalesMoney();
+                                totalStoreMoney += p.getProductSalesMoney();
+
                             }
 
                         }
+
+                        System.out.println(s.getStoreName() + ": " + s.getStoreSales() + " ($" + totalStoreMoney + ")\n");
+
                     }
 
-                    System.out.println("Total : " + total);
+                    if (!finalResults.isEmpty()) {
+                        System.out.println("Total: " + total + " ($" + totalMoney + ")");
+                    } else {
+                        System.out.println("No sales info found.");
+                    }
 
                 } else {
 
@@ -750,6 +772,7 @@ public class Client implements Runnable {
                         }
 
                     }
+
                 }
 
             } else if (resAction.equalsIgnoreCase("confirmation_message")) {

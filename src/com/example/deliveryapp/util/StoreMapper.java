@@ -64,7 +64,12 @@ public class StoreMapper {
                     yield false;
                 }
                 case SALES_PRODUCT -> {
-                    result.add(new AbstractMap.SimpleEntry<>("sales_product", store));
+                    for (Product p : store.getProducts()) {
+                        if (p.getProductType().equalsIgnoreCase(category)) {
+                            result.add(new AbstractMap.SimpleEntry<>("sales_product", store));
+                            break;
+                        }
+                    }
                     yield false;
                 }
                 default -> true;
