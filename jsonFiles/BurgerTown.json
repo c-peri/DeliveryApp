@@ -5,7 +5,7 @@
   "FoodCategory": "fastfood",
   "Stars": 5,
   "NoOfVotes": 33,
-  "StoreLogo": "jsonFiles/logo1.png",
+  "StoreLogo": "jsonFiles/BurgerTown.png",
   "Products": [
     {
       "ProductName": "Classic Burger",

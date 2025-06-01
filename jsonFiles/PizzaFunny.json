@@ -1,11 +1,11 @@
 {
-  "StoreName": "PizzaFan",
+  "StoreName": "PizzaFunny",
   "Latitude": 27.9932963,
   "Longitude": 33.733413,
   "FoodCategory": "pizzeria",
   "Stars": 4,
   "NoOfVotes": 1,
-  "StoreLogo": "jsonFiles/example_logo.png",
+  "StoreLogo": "jsonFiles/PizzaFunny.png",
   "Products": [
     {
       "ProductName": "margarita",

@@ -5,7 +5,7 @@
   "FoodCategory": "mexican",
   "Stars": 5,
   "NoOfVotes": 22,
-  "StoreLogo": "jsonFiles/logo2.png",
+  "StoreLogo": "jsonFiles/TacoLoco.png",
   "Products": [
     {
       "ProductName": "Beef Taco",

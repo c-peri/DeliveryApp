@@ -5,7 +5,7 @@
   "FoodCategory": "pizzeria",
   "Stars": 4.5,
   "NoOfVotes": 86,
-  "StoreLogo": "jsonFiles/logo4.png",
+  "StoreLogo": "jsonFiles/PappasPizza.png",
   "Products": [
     {
       "ProductName": "Margarita",

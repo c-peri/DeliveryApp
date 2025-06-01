@@ -5,7 +5,7 @@
   "FoodCategory": "asian",
   "Stars": 3.5,
   "NoOfVotes": 30,
-  "StoreLogo": "jsonFiles/logo5.png",
+  "StoreLogo": "jsonFiles/SushiSpot.png",
   "Products": [
     {
       "ProductName": "Urumaki Combo",

@@ -5,7 +5,7 @@
   "FoodCategory": "asian",
   "Stars": 5,
   "NoOfVotes": 100,
-  "StoreLogo": "jsonFiles/logo6.png",
+  "StoreLogo": "jsonFiles/WokOnSunshine.png",
   "Products": [
     {
       "ProductName": "Chicken Fried Noodles",

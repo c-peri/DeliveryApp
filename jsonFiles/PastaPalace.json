@@ -5,7 +5,7 @@
   "FoodCategory": "italian",
   "Stars": 4,
   "NoOfVotes": 35,
-  "StoreLogo": "jsonFiles/logo3.png",
+  "StoreLogo": "jsonFiles/PastaPalace.png",
   "Products": [
     {
       "ProductName": "Spaghetti Bolognese",
