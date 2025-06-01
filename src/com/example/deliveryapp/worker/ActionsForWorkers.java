@@ -258,7 +258,7 @@ public class ActionsForWorkers implements Runnable {
 
                             found = true;
 
-                            temp1.setClientAvailability(false);
+                            temp1.setClientAvailability(true);
                             store.setProducts(products);
                             confirmationMsg = "Product '" + productName + "' removed from store '" + storeName + "' successfully!";
                             System.out.println("[Worker-" + workerId + "] Removed product: '" + productName + "' from store: '" + storeName + "' successfully");
