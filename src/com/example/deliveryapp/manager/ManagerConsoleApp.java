@@ -43,7 +43,7 @@ public class ManagerConsoleApp {
 
                     case "1":
 
-                        System.out.println("---------------------------------------------------------------------------------");
+                        System.out.println("-------------------------------------------------------------------------------------------------------------------------------------------------------");
 
                         clientThread = new Thread(new Client(IP_ADDRESS, 5000, "null::json", "Manager"));
                         clientThread.start();
@@ -58,7 +58,7 @@ public class ManagerConsoleApp {
                         break;
                     case "2":
 
-                        System.out.println("---------------------------------------------------------------------------------");
+                        System.out.println("-------------------------------------------------------------------------------------------------------------------------------------------------------");
 
                         clientThread = new Thread(new Client(IP_ADDRESS, 5000, "null::add_available_product", "Manager"));
                         clientThread.start();
@@ -73,7 +73,7 @@ public class ManagerConsoleApp {
                         break;
                     case "3":
 
-                        System.out.println("---------------------------------------------------------------------------------");
+                        System.out.println("-------------------------------------------------------------------------------------------------------------------------------------------------------");
 
                         clientThread = new Thread(new Client(IP_ADDRESS, 5000, "null::remove_available_product", "Manager"));
                         clientThread.start();
@@ -88,7 +88,7 @@ public class ManagerConsoleApp {
                         break;
                     case "4":
 
-                        System.out.println("---------------------------------------------------------------------------------");
+                        System.out.println("-------------------------------------------------------------------------------------------------------------------------------------------------------");
 
                         clientThread = new Thread(new Client(IP_ADDRESS, 5000, "null::add_new_product", "Manager"));
                         clientThread.start();
@@ -103,7 +103,7 @@ public class ManagerConsoleApp {
                         break;
                     case "5":
 
-                        System.out.println("---------------------------------------------------------------------------------");
+                        System.out.println("-------------------------------------------------------------------------------------------------------------------------------------------------------");
 
                         clientThread = new Thread(new Client(IP_ADDRESS, 5000, "null::remove_old_product", "Manager"));
                         clientThread.start();
@@ -118,7 +118,7 @@ public class ManagerConsoleApp {
                         break;
                     case "6":
 
-                        System.out.println("---------------------------------------------------------------------------------");
+                        System.out.println("-------------------------------------------------------------------------------------------------------------------------------------------------------");
 
                         String ch;
 
@@ -132,7 +132,7 @@ public class ManagerConsoleApp {
 
                         if (ch.equalsIgnoreCase("1")) {
 
-                            System.out.println("---------------------------------------------------------------------------------");
+                            System.out.println("-------------------------------------------------------------------------------------------------------------------------------------------------------");
 
                             clientThread = new Thread(new Client(IP_ADDRESS, 5000, "null::total_sales_store", "Manager"));
                             clientThread.start();
@@ -144,7 +144,7 @@ public class ManagerConsoleApp {
 
                         } else if (ch.equalsIgnoreCase("2")) {
 
-                            System.out.println("---------------------------------------------------------------------------------");
+                            System.out.println("-------------------------------------------------------------------------------------------------------------------------------------------------------");
 
                             clientThread = new Thread(new Client(IP_ADDRESS, 5000, "null::total_sales_product", "Manager"));
                             clientThread.start();
@@ -161,11 +161,14 @@ public class ManagerConsoleApp {
                         break;
                     case "7":
 
-                        System.out.println("---------------------------------------------------------------------------------");
+                        System.out.println("-------------------------------------------------------------------------------------------------------------------------------------------------------");
 
                         return;
                     default:
+
+                        System.out.println("-------------------------------------------------------------------------------------------------------------------------------------------------------");
                         System.out.println("Error: Please choose one of the options listed");
+                        System.out.println("-------------------------------------------------------------------------------------------------------------------------------------------------------");
 
                 }
 
@@ -173,11 +176,11 @@ public class ManagerConsoleApp {
 
             do {
 
-                System.out.println("---------------------------------------------------------------------------------");
+                System.out.println("-------------------------------------------------------------------------------------------------------------------------------------------------------");
                 System.out.println("Do you wish to continue with the insertion?");
                 System.out.print("> ");
                 choice = in.nextLine();
-                System.out.println("---------------------------------------------------------------------------------");
+                System.out.println("-------------------------------------------------------------------------------------------------------------------------------------------------------");
 
                 if (choice.equalsIgnoreCase("no")) {
                     con = false;

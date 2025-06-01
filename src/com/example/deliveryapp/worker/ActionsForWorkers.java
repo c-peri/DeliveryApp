@@ -57,7 +57,7 @@ public class ActionsForWorkers implements Runnable {
                 if (!storeMap.containsKey(storeName.toLowerCase())) {
 
                     storeMap.put(storeName.toLowerCase(), store);
-                    confirmationMsg = storeName + " has been added to the store";
+                    confirmationMsg = storeName + " has been added";
                     System.out.println("[Worker-" + workerId + "] Added store : '"+storeName+"' to its map successfully");
 
                 } else {
@@ -249,7 +249,7 @@ public class ActionsForWorkers implements Runnable {
 
                         temp1.setClientAvailability(false);
                         store.setProducts(products);
-                        confirmationMsg = "Product '" + productName + " removed from store '" + storeName + "' successfully!";
+                        confirmationMsg = "Product '" + productName + "' removed from store '" + storeName + "' successfully!";
                         System.out.println("[Worker-" + workerId + "] Removed product: '"+productName+"' from store: '"+storeName+"' successfully");
 
                         break;
