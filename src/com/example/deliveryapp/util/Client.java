@@ -10,10 +10,7 @@ import com.google.gson.JsonSyntaxException;
 
 import java.io.*;
 import java.net.Socket;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Scanner;
-import java.util.UUID;
+import java.util.*;
 import java.util.stream.Collectors;
 
 public class Client implements Runnable {
@@ -98,10 +95,8 @@ public class Client implements Runnable {
 
                                 break;
 
-                            } catch (IOException ex) {
+                            } catch (IOException | ClassNotFoundException ex) {
                                 throw new RuntimeException(ex);
-                            } catch (ClassNotFoundException e) {
-                                throw new RuntimeException(e);
                             }
 
                         } else if (this.action.equalsIgnoreCase("add_available_product")) {
@@ -135,10 +130,8 @@ public class Client implements Runnable {
 
                                 break;
 
-                            } catch (IOException ex) {
+                            } catch (IOException | ClassNotFoundException ex) {
                                 throw new RuntimeException(ex);
-                            } catch (ClassNotFoundException e) {
-                                throw new RuntimeException(e);
                             }
 
                         } else if (this.action.equalsIgnoreCase("remove_available_product")) {
@@ -283,13 +276,10 @@ public class Client implements Runnable {
 
                                 printSearchResults(clientSocket,action,category);
 
-
                                 break;
 
-                            } catch (IOException ex) {
+                            } catch (IOException | ClassNotFoundException ex) {
                                 throw new RuntimeException(ex);
-                            } catch (ClassNotFoundException e) {
-                                throw new RuntimeException(e);
                             }
 
                         }
@@ -358,7 +348,6 @@ public class Client implements Runnable {
                                 throw new RuntimeException(ex);
                             }
 
-
                         } else if (this.action.equalsIgnoreCase("search_food_preference")) {
 
                             String longitude1, latitude1, preference;
@@ -374,7 +363,6 @@ public class Client implements Runnable {
                                 } catch (NumberFormatException ignore) {
                                     System.out.println("Invalid input");
                                     in.nextLine();
-
                                 }
                             }
 
@@ -409,7 +397,6 @@ public class Client implements Runnable {
                                 printSearchResults(clientSocket,role,null);
                                 break;
 
-
                             } catch (IOException ex) {
                                 throw new RuntimeException(ex);
                             }
@@ -429,7 +416,6 @@ public class Client implements Runnable {
                                 } catch (NumberFormatException ignore) {
                                     System.out.println("Invalid input");
                                     in.nextLine();
-
                                 }
                             }
 
@@ -496,7 +482,6 @@ public class Client implements Runnable {
                                 } catch (NumberFormatException ignore) {
                                     System.out.println("Invalid input");
                                     in.nextLine();
-
                                 }
                             }
 
@@ -595,7 +580,7 @@ public class Client implements Runnable {
 
                         } else  if (this.action.equalsIgnoreCase("rate_store")) {
 
-                            String longitude1, latitude1, storeName, ratingInput; // Renamed 'store' to 'storeName' for clarity
+                            String longitude1, latitude1, storeName, ratingInput;
 
                             double longitude;
                             while (true) {
@@ -728,26 +713,33 @@ public class Client implements Runnable {
 
                     int total = 0;
                     double totalMoney = 0;
+                    HashMap<Product,Integer> temp = new HashMap<>();
 
                     for (Store s : finalResults) {
 
-                        System.out.println(s.getStoreName() + ": ");
                         double totalStoreMoney = 0;
 
                         for (Product p : s.getProducts()) {
 
                             if (p.getProductType().equalsIgnoreCase(opt)) {
 
-                                System.out.println("- " + p.getProductName() + ": " + p.getProductSales()+ " ($" + p.getProductSalesMoney() + ")");
                                 total += p.getProductSales();
                                 totalMoney += p.getProductSalesMoney();
                                 totalStoreMoney += p.getProductSalesMoney();
+                                temp.put(p,total);
 
                             }
 
                         }
 
-                        System.out.println(s.getStoreName() + ": " + s.getStoreSales() + " ($" + totalStoreMoney + ")\n");
+                        System.out.println(s.getStoreName() + " ($" + totalStoreMoney + "): ");
+
+                        for(Map.Entry<Product, Integer> entry : temp.entrySet()){
+                            System.out.println("    - " + entry.getKey().getProductName() + ": " + entry.getKey().getProductSales() + " ($" + entry.getKey().getProductSalesMoney()  + ")");
+                        }
+
+                        temp.clear();
+                        System.out.println();
 
                     }
 

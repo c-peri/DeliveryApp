@@ -9,10 +9,6 @@ import com.example.deliveryapp.util.ActionWrapper;
 import com.example.deliveryapp.util.JobCoordinator;
 
 import java.io.IOException;
-import java.io.ObjectInputStream;
-import java.net.UnknownHostException;
-import java.util.List;
-
 import java.io.ObjectOutputStream;
 import java.net.Socket;
 import java.util.UUID;
@@ -39,34 +35,15 @@ public class ActionsForReducer implements Runnable {
         try (Socket socket = new Socket(masterHost, masterPort);
              ObjectOutputStream out = new ObjectOutputStream(socket.getOutputStream())) {
 
-            if (workerResults instanceof String) {
+            ActionWrapper wrapper = new ActionWrapper(workerResults, action, jobID);
+            out.writeObject(wrapper);
+            out.flush();
+            Object lock = JobCoordinator.getLock(UUID.fromString(jobID));
 
-                ActionWrapper wrapper = new ActionWrapper(workerResults, action, jobID);
-                out.writeObject(wrapper);
-                out.flush();
-
-
-                Object lock = JobCoordinator.getLock(UUID.fromString(jobID));
-                synchronized (lock) {
-                    while (!JobCoordinator.getStatus(UUID.fromString(jobID)).equals("COMPLETED")) {
-                        lock.wait(500);
-                    }
-
+            synchronized (lock) {
+                while (!JobCoordinator.getStatus(UUID.fromString(jobID)).equals("COMPLETED")) {
+                    lock.wait(500);
                 }
-
-            } else {
-
-                ActionWrapper wrapper = new ActionWrapper(workerResults, this.action, jobID);
-                out.writeObject(wrapper);
-                out.flush();
-
-                Object lock = JobCoordinator.getLock(UUID.fromString(jobID));
-                synchronized (lock) {
-                    while (!JobCoordinator.getStatus(UUID.fromString(jobID)).equals("COMPLETED")) {
-                        lock.wait(500);
-                    }
-                }
-
             }
 
             System.out.println("Job complete: " + jobID);

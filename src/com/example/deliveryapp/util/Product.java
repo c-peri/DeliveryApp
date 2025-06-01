@@ -33,6 +33,8 @@ public class Product implements Serializable {
         this.AvailableAmount = AvailableAmount;
         this.Price = Price;
         this.client_availability = true;
+
+        this.availability = (AvailableAmount > 0);
     }
 
     public String getProductName() {
@@ -57,9 +59,7 @@ public class Product implements Serializable {
 
     public void setAvailableAmount(int AvailableAmount) {
         this.AvailableAmount = AvailableAmount;
-        if (this.AvailableAmount == 0){
-            this.availability = false;
-        }
+        this.availability = (this.AvailableAmount > 0);
     }
 
     public double getPrice() {

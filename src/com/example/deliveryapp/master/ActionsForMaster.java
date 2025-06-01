@@ -6,12 +6,10 @@ package com.example.deliveryapp.master;
  */
 
 import com.example.deliveryapp.util.ActionWrapper;
-import com.example.deliveryapp.util.Store;
 
 import java.io.IOException;
 import java.io.ObjectOutputStream;
 import java.net.Socket;
-import java.util.List;
 
 public class ActionsForMaster implements Runnable {
 

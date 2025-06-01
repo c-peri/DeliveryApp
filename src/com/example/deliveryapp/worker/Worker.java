@@ -5,7 +5,6 @@ package com.example.deliveryapp.worker;
  * @author Christina Perifana   || p3220160@aueb.gr
  */
 
-import com.example.deliveryapp.util.Client;
 import com.example.deliveryapp.util.Config;
 import com.example.deliveryapp.util.Server;
 import com.example.deliveryapp.util.Store;
@@ -37,7 +36,6 @@ public class Worker {
 
                 Server server = new Server("Worker-" + workerId, port, new Object(), StoreMap);
                 new Thread(server).start();
-
 
             } catch (Exception e) {
                 e.printStackTrace();

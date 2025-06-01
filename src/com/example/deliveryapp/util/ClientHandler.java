@@ -136,7 +136,6 @@ public class ClientHandler implements Runnable {
 
         String jobID;
         String opt;
-        String input = "";
 
         try {
 
@@ -177,7 +176,6 @@ public class ClientHandler implements Runnable {
 
                             List<Store> finalResults = (List<Store>) wrapper.getObject();
                             String receivedJobID = wrapper.getJobID();
-                            int total = 0;
 
                             System.out.println("[Master] Sending sales statistics to Manager for JobID: " + receivedJobID);
 
@@ -188,14 +186,12 @@ public class ClientHandler implements Runnable {
                                 lock.notifyAll();
                             }
 
-
                         } else {
 
                             List<Store> finalResults = (List<Store>) wrapper.getObject();
                             String receivedJobID = wrapper.getJobID();
 
                             System.out.println("[Master] Sending sales statistics to Manager for JobID: " + receivedJobID);
-
 
                             addFinalResults(finalResults, receivedJobID);
 
@@ -280,12 +276,14 @@ public class ClientHandler implements Runnable {
                             int workerPort = 5001 + workerId;
 
                             new Thread(new ActionsForMaster(IP_ADDRESS, workerPort, wrapper, workerId)).start();
+
                         } else if (action.equalsIgnoreCase("total_sales_store") || action.equalsIgnoreCase("total_sales_product")) {
 
                             for (int i = 1; i <= numOfWorkers; i++) {
                                 ActionWrapper clonedWrapper = new ActionWrapper(obj, action, jobID);
                                 new Thread(new ActionsForMaster(IP_ADDRESS, 5001 + i, clonedWrapper, i)).start();
                             }
+
                         }
 
                         Object clientResults;
@@ -314,7 +312,6 @@ public class ClientHandler implements Runnable {
                             synchronized (jobTrackersLock) {
                                 jobTrackers.remove(jobID);
                             }
-
                         }
 
                         System.out.println("[Master] Sending results for JobID: " + jobID);
@@ -346,9 +343,7 @@ public class ClientHandler implements Runnable {
 
                         if (action.equalsIgnoreCase("purchase_product")) {
 
-                            if (obj instanceof PurchaseDetails) {
-
-                                PurchaseDetails purchaseDetails = (PurchaseDetails) obj;
+                            if (obj instanceof PurchaseDetails purchaseDetails) {
 
                                 String storeName = purchaseDetails.getStoreName();
                                 System.out.println("[Master] Received purchase request for store: " + storeName);
@@ -501,6 +496,7 @@ public class ClientHandler implements Runnable {
                         }
 
                         return;
+
                     }
 
                     break;
