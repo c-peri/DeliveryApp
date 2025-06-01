@@ -559,7 +559,12 @@ public class ActionsForWorkers implements Runnable {
                 if (distance <= 5.0) {
                     synchronized (store) {
                         store.addStarRating(stars);
+                    }
+                    if (stars == 1) {
+                        confirmationMsg = "You gave " + stars + " star to " + storeName + ". :(";
+                    } else {
                         confirmationMsg = "You gave " + stars + " stars to " + storeName + "!";
+
                     }
 
                 } else {
