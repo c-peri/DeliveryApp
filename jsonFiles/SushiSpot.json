@@ -17,13 +17,13 @@
       "ProductName": "Umaki Combo",
       "ProductType": "sushi",
       "AvailableAmount": 10,
-      "Price": 25.95
+      "Price": 22.95
     },
     {
       "ProductName": "Miso Soup",
       "ProductType": "side",
       "AvailableAmount": 8,
-      "Price": 8.80
+      "Price": 15.30
     },
     {
       "ProductName": "Shrimp Tempura",
@@ -35,19 +35,19 @@
       "ProductName": "California Roll",
       "ProductType": "sushi",
       "AvailableAmount": 10,
-      "Price": 15.80
+      "Price": 14.90
     },
     {
       "ProductName": "Salmon Nigiri",
       "ProductType": "sushi",
       "AvailableAmount": 5,
-      "Price": 14.80
+      "Price": 16.50
     },
     {
       "ProductName": "Sake",
       "ProductType": "drink",
       "AvailableAmount": 6,
-      "Price": 10.90
+      "Price": 10.99
     }
   ]
 }
