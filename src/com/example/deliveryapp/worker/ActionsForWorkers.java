@@ -561,10 +561,15 @@ public class ActionsForWorkers implements Runnable {
                         store.addStarRating(stars);
                     }
                     if (stars == 1) {
-                        confirmationMsg = "You gave " + stars + " star to " + storeName + ". :(";
+                        confirmationMsg = "You gave " + stars + " star to " + storeName + ".  \uD83D\uDE22";
+                    } else if (stars == 2){
+                        confirmationMsg = "You gave " + stars + " stars to " + storeName + ".  \uD83D\uDE14";
+                    } else if (stars == 3){
+                        confirmationMsg = "You gave " + stars + " stars to " + storeName + ".  \uD83E\uDD28";
+                    } else if (stars == 4){
+                        confirmationMsg = "You gave " + stars + " stars to " + storeName + "!  \uD83D\uDE00";
                     } else {
-                        confirmationMsg = "You gave " + stars + " stars to " + storeName + "!";
-
+                        confirmationMsg = "You gave " + stars + " stars to " + storeName + "!  \uD83E\uDD73 \uD83E\uDD29";
                     }
 
                 } else {
