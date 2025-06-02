@@ -217,7 +217,11 @@ public class ClientHandler implements Runnable {
                                 int workerId = HashStore.getWorkerID(store.getStoreName(), numOfWorkers);
                                 int workerPort = 5001 + workerId;
 
-                                new Thread(new ActionsForMaster(IP_ADDRESS, workerPort, wrapper, workerId)).start();
+                                if (workerId == 2){
+                                    new Thread(new ActionsForMaster(IP_ADDRESS, workerPort, wrapper, workerId)).start();
+                                } else {
+                                    new Thread(new ActionsForMaster("172.20.10.3", workerPort, wrapper, workerId)).start();
+                                }
 
                             }
 
@@ -233,7 +237,11 @@ public class ClientHandler implements Runnable {
                             int workerId = HashStore.getWorkerID(storeName, numOfWorkers);
                             int workerPort = 5001 + workerId;
 
-                            new Thread(new ActionsForMaster(IP_ADDRESS, workerPort, wrapper, workerId)).start();
+                            if (workerId == 2){
+                                new Thread(new ActionsForMaster(IP_ADDRESS, workerPort, wrapper, workerId)).start();
+                            } else {
+                                new Thread(new ActionsForMaster("172.20.10.3", workerPort, wrapper, workerId)).start();
+                            }
 
                         } else if (action.equalsIgnoreCase("remove_available_product")) {
 
@@ -247,7 +255,11 @@ public class ClientHandler implements Runnable {
                             int workerId = HashStore.getWorkerID(storeName, numOfWorkers);
                             int workerPort = 5001 + workerId;
 
-                            new Thread(new ActionsForMaster(IP_ADDRESS, workerPort, wrapper, workerId)).start();
+                            if (workerId == 2){
+                                new Thread(new ActionsForMaster(IP_ADDRESS, workerPort, wrapper, workerId)).start();
+                            } else {
+                                new Thread(new ActionsForMaster("172.20.10.3", workerPort, wrapper, workerId)).start();
+                            }
 
                         } else if (action.equalsIgnoreCase("add_new_product")) {
 
@@ -261,7 +273,11 @@ public class ClientHandler implements Runnable {
                             int workerId = HashStore.getWorkerID(storeName, numOfWorkers);
                             int workerPort = 5001 + workerId;
 
-                            new Thread(new ActionsForMaster(IP_ADDRESS, workerPort, wrapper, workerId)).start();
+                            if (workerId == 2){
+                                new Thread(new ActionsForMaster(IP_ADDRESS, workerPort, wrapper, workerId)).start();
+                            } else {
+                                new Thread(new ActionsForMaster("172.20.10.3", workerPort, wrapper, workerId)).start();
+                            }
 
                         } else if (action.equalsIgnoreCase("remove_old_product")) {
 
@@ -275,13 +291,22 @@ public class ClientHandler implements Runnable {
                             int workerId = HashStore.getWorkerID(storeName, numOfWorkers);
                             int workerPort = 5001 + workerId;
 
-                            new Thread(new ActionsForMaster(IP_ADDRESS, workerPort, wrapper, workerId)).start();
+                            if (workerId == 2){
+                                new Thread(new ActionsForMaster(IP_ADDRESS, workerPort, wrapper, workerId)).start();
+                            } else {
+                                new Thread(new ActionsForMaster("172.20.10.3", workerPort, wrapper, workerId)).start();
+                            }
 
                         } else if (action.equalsIgnoreCase("total_sales_store") || action.equalsIgnoreCase("total_sales_product")) {
 
                             for (int i = 1; i <= numOfWorkers; i++) {
                                 ActionWrapper clonedWrapper = new ActionWrapper(obj, action, jobID);
-                                new Thread(new ActionsForMaster(IP_ADDRESS, 5001 + i, clonedWrapper, i)).start();
+                                if (i == 2){
+                                    new Thread(new ActionsForMaster(IP_ADDRESS, 5001 + i, clonedWrapper, i)).start();
+                                } else {
+                                    new Thread(new ActionsForMaster("172.20.10.3", 5001 + i, clonedWrapper, i)).start();
+                                }
+
                             }
 
                         }
@@ -350,7 +375,11 @@ public class ClientHandler implements Runnable {
 
                                 int workerId = HashStore.getWorkerID(storeName, numOfWorkers);
                                 int workerPort = 5001 + workerId;
-                                new Thread(new ActionsForMaster(IP_ADDRESS, workerPort, wrapper, workerId)).start();
+                                if (workerId == 2){
+                                    new Thread(new ActionsForMaster(IP_ADDRESS, workerPort, wrapper, workerId)).start();
+                                } else {
+                                    new Thread(new ActionsForMaster("172.20.10.3", workerPort, wrapper, workerId)).start();
+                                }
 
                             } else {
 
@@ -381,14 +410,22 @@ public class ClientHandler implements Runnable {
                             int workerId = HashStore.getWorkerID(storeName, numOfWorkers);
                             int workerPort = 5001 + workerId;
 
-                            new Thread(new ActionsForMaster(IP_ADDRESS, workerPort, wrapper, workerId)).start();
+                            if (workerId == 2){
+                                new Thread(new ActionsForMaster(IP_ADDRESS, workerPort, wrapper, workerId)).start();
+                            } else {
+                                new Thread(new ActionsForMaster("172.20.10.3", workerPort, wrapper, workerId)).start();
+                            }
 
                         } else if (action.equalsIgnoreCase("showcase_stores") || action.equalsIgnoreCase("search_food_preference") ||
                                    action.equalsIgnoreCase("search_ratings") || action.equalsIgnoreCase("search_price_range")) {
 
                             for (int i = 1; i <= numOfWorkers; i++) {
                                 ActionWrapper clonedWrapper = new ActionWrapper(obj, action, jobID);
-                                new Thread(new ActionsForMaster(IP_ADDRESS, 5001 + i, clonedWrapper, i)).start();
+                                if (i==2){
+                                    new Thread(new ActionsForMaster(IP_ADDRESS, 5001 + i, clonedWrapper, i)).start();
+                                } else {
+                                    new Thread(new ActionsForMaster("172.20.10.3", 5001 + i, clonedWrapper, i)).start();
+                                }
                             }
 
                         }
@@ -517,7 +554,7 @@ public class ClientHandler implements Runnable {
                         if (resultList != null) {
                             addMappedResults(resultList, wrapper.getJobID(), action);
                         } else if (confirmFromWorker != null) {
-                            new Thread(new ActionsForReducer(IP_ADDRESS, 5000, "confirmation_from_worker", confirmFromWorker, wrapper.getJobID())).start();
+                            new Thread(new ActionsForReducer("172.20.10.3", 5000, "confirmation_from_worker", confirmFromWorker, wrapper.getJobID())).start();
                         }
 
                         break;
@@ -536,7 +573,7 @@ public class ClientHandler implements Runnable {
 
                             int workerId = HashStore.getWorkerID(store.getStoreName(), numOfWorkers);
 
-                            new Thread(new ActionsForWorkers(IP_ADDRESS, 5001, wrapper, hashMap, workerId)).start();
+                            new Thread(new ActionsForWorkers("172.20.10.3", 5001, wrapper, hashMap, workerId)).start();
 
                         }
 
@@ -548,7 +585,7 @@ public class ClientHandler implements Runnable {
 
                         int workerId = HashStore.getWorkerID(storeName, numOfWorkers);
 
-                        new Thread(new ActionsForWorkers(IP_ADDRESS, 5001, wrapper, hashMap, workerId)).start();
+                        new Thread(new ActionsForWorkers("172.20.10.3", 5001, wrapper, hashMap, workerId)).start();
 
                     } else if (action.equalsIgnoreCase("remove_available_product")) {
 
@@ -558,7 +595,7 @@ public class ClientHandler implements Runnable {
 
                         int workerId = HashStore.getWorkerID(storeName, numOfWorkers);
 
-                        new Thread(new ActionsForWorkers(IP_ADDRESS, 5001, wrapper, hashMap, workerId)).start();
+                        new Thread(new ActionsForWorkers("172.20.10.3", 5001, wrapper, hashMap, workerId)).start();
 
                     } else if (action.equalsIgnoreCase("add_new_product")) {
 
@@ -568,7 +605,7 @@ public class ClientHandler implements Runnable {
 
                         int workerId = HashStore.getWorkerID(storeName, numOfWorkers);
 
-                        new Thread(new ActionsForWorkers(IP_ADDRESS, 5001, wrapper, hashMap, workerId)).start();
+                        new Thread(new ActionsForWorkers("172.20.10.3", 5001, wrapper, hashMap, workerId)).start();
 
                     } else if (action.equalsIgnoreCase("remove_old_product")) {
 
@@ -578,7 +615,7 @@ public class ClientHandler implements Runnable {
 
                         int workerId = HashStore.getWorkerID(storeName, numOfWorkers);
 
-                        new Thread(new ActionsForWorkers(IP_ADDRESS, 5001, wrapper, hashMap, workerId)).start();
+                        new Thread(new ActionsForWorkers("172.20.10.3", 5001, wrapper, hashMap, workerId)).start();
 
                     } else if (action.equalsIgnoreCase("showcase_stores")) {
 
@@ -587,7 +624,7 @@ public class ClientHandler implements Runnable {
 
                         int workerId = Integer.parseInt(parts[2]);
 
-                        new Thread(new ActionsForWorkers(IP_ADDRESS, 5001, wrapper, hashMap, workerId)).start();
+                        new Thread(new ActionsForWorkers("172.20.10.3", 5001, wrapper, hashMap, workerId)).start();
 
                     } else if (action.equalsIgnoreCase("search_food_preference")) {
 
@@ -596,7 +633,7 @@ public class ClientHandler implements Runnable {
 
                         int workerId = Integer.parseInt(parts[3]);
 
-                        new Thread(new ActionsForWorkers(IP_ADDRESS, 5001, wrapper, hashMap, workerId)).start();
+                        new Thread(new ActionsForWorkers("172.20.10.3", 5001, wrapper, hashMap, workerId)).start();
 
                     } else if (action.equalsIgnoreCase("search_ratings")) {
 
@@ -605,7 +642,7 @@ public class ClientHandler implements Runnable {
 
                         int workerId = Integer.parseInt(parts[3]);
 
-                        new Thread(new ActionsForWorkers(IP_ADDRESS, 5001, wrapper, hashMap, workerId)).start();
+                        new Thread(new ActionsForWorkers("172.20.10.3", 5001, wrapper, hashMap, workerId)).start();
 
                     } else if (action.equalsIgnoreCase("search_price_range")) {
 
@@ -614,13 +651,13 @@ public class ClientHandler implements Runnable {
 
                         int workerId = Integer.parseInt(parts[3]);
 
-                        new Thread(new ActionsForWorkers(IP_ADDRESS, 5001, wrapper, hashMap, workerId)).start();
+                        new Thread(new ActionsForWorkers("172.20.10.3", 5001, wrapper, hashMap, workerId)).start();
 
                     } else if (action.equalsIgnoreCase("purchase_product")) {
 
                         int workerId = localPort - 5001;
 
-                        new Thread(new ActionsForWorkers(IP_ADDRESS, 5001, wrapper, hashMap, workerId)).start();
+                        new Thread(new ActionsForWorkers("172.20.10.3", 5001, wrapper, hashMap, workerId)).start();
 
                     } else if (action.equalsIgnoreCase("rate_store")) {
 
@@ -629,7 +666,7 @@ public class ClientHandler implements Runnable {
 
                         int workerId = Integer.parseInt(parts[4]);
 
-                        new Thread(new ActionsForWorkers(IP_ADDRESS, 5001, wrapper, hashMap, workerId)).start();
+                        new Thread(new ActionsForWorkers("172.20.10.3", 5001, wrapper, hashMap, workerId)).start();
 
                     } else if (action.equalsIgnoreCase("total_sales_store") || action.equalsIgnoreCase("total_sales_product")) {
 
@@ -638,7 +675,7 @@ public class ClientHandler implements Runnable {
 
                         int workerId = Integer.parseInt(parts[1]);
 
-                        new Thread(new ActionsForWorkers(IP_ADDRESS, 5001, wrapper, hashMap, workerId)).start();
+                        new Thread(new ActionsForWorkers("172.20.10.3", 5001, wrapper, hashMap, workerId)).start();
 
                     }
 
